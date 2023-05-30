@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/elbuensabor?allowPublicKeyRetrieval=true&useSSL=false&useTimezone=true&serverTimezone=GMT&characterEncoding=UTF-8
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  servlet:
+    multipart:
+      max-file-size: 5MB
+upload:
+  dir: ./uploads/images/
+security:
+  key: ElBuenSaborProyectoProgramacion1
+
+google:
+  client-id: 884827796185-0a0kvmu2gj381vvnfmh7ekd8j3a2o613.apps.googleusercontent.com
