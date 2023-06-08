@@ -14,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
@@ -194,7 +193,7 @@ public class ProductService extends BaseServiceImpl<Product, ProductRepository> 
     }
 
     @Transactional(rollbackOn = Exception.class)
-    public Product newSave(Product product, MultipartFile file, String url) throws IOException {
+    public Product newSave(Product product, MultipartFile file, String url) {
 
         ImageService imageService = imageServiceFactory.getObject(Objects.nonNull(file));
         Image saved = imageService.save(Objects.nonNull(file) ? file : url);

@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -94,7 +93,7 @@ public class ProductController {
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_CHEF')")
     public ResponseEntity<ProductDto> newSave(@RequestPart("product") @Valid ProductDto productDto,
                                               @RequestPart(value = "image", required = false) MultipartFile file,
-                                              @RequestPart(value = "imageUrl", required = false) String url) throws IOException {
+                                              @RequestPart(value = "imageUrl", required = false) String url) {
 
         Product saved = service.newSave(mapper.toEntity(productDto), file, url);
         ProductDto savedProductDto = mapper.toProductDto(saved);

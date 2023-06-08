@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,7 +13,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -29,7 +28,7 @@ public class ImageFileService extends BaseServiceImpl<Image, ImageRepository> im
     }
 
     @Override
-    public Image save(Object image) throws IOException {
+    public Image save(Object image) {
         MultipartFile imageFile = (MultipartFile) image;
         String fileName = imageFile.getOriginalFilename();
         String fileExtension = "";
@@ -37,14 +36,10 @@ public class ImageFileService extends BaseServiceImpl<Image, ImageRepository> im
         if (dotIndex > 0) {
             fileExtension = fileName.substring(dotIndex).toLowerCase();
         }
-        fileName = UUID.randomUUID() + fileExtension;
-
-        validateMimeTypes(imageFile);
-
-        File tempFile = convertMultipartFileToFile(imageFile);
-        if (!isImageFile(tempFile)) {
-            throw new RuntimeException("The uploaded file is not a valid image file");
+        if (!List.of(".jpg", ".png").contains(fileExtension)) {
+            throw new RuntimeException("File not allowed");
         }
+        fileName = UUID.randomUUID() + fileExtension;
 
         String projectDir = System.getProperty("user.dir");
         String location = projectDir + uploadDir + fileName;
@@ -84,12 +79,6 @@ public class ImageFileService extends BaseServiceImpl<Image, ImageRepository> im
         return repository.findByHash(value);
     }
 
-    private void validateMimeTypes(MultipartFile imageFile) {
-        if (!Arrays.asList("image/jpeg", "image/png").contains(imageFile.getContentType())) {
-            throw new RuntimeException("Only JPG and PNG images are allowed.");
-        }
-    }
-
     private String calculateHash(MultipartFile file) {
 
         try {
@@ -124,13 +113,6 @@ public class ImageFileService extends BaseServiceImpl<Image, ImageRepository> im
         }
         return result.toString();
     }
-
-    private File convertMultipartFileToFile(MultipartFile multipartFile) throws IOException {
-        File file = new File(Objects.requireNonNull(multipartFile.getOriginalFilename()));
-        multipartFile.transferTo(file);
-        return file;
-    }
-
 
     @Override
     public Image changeStates(Image source, Image destination) {
