@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,7 +29,7 @@ public class ImageFileService extends BaseServiceImpl<Image, ImageRepository> im
     }
 
     @Override
-    public Image save(Object image) {
+    public Image save(Object image) throws IOException {
         MultipartFile imageFile = (MultipartFile) image;
         String fileName = imageFile.getOriginalFilename();
         String fileExtension = "";
@@ -39,6 +40,11 @@ public class ImageFileService extends BaseServiceImpl<Image, ImageRepository> im
         fileName = UUID.randomUUID() + fileExtension;
 
         validateMimeTypes(imageFile);
+
+        File tempFile = convertMultipartFileToFile(imageFile);
+        if (!isImageFile(tempFile)) {
+            throw new RuntimeException("The uploaded file is not a valid image file");
+        }
 
         String projectDir = System.getProperty("user.dir");
         String location = projectDir + uploadDir + fileName;
@@ -118,6 +124,13 @@ public class ImageFileService extends BaseServiceImpl<Image, ImageRepository> im
         }
         return result.toString();
     }
+
+    private File convertMultipartFileToFile(MultipartFile multipartFile) throws IOException {
+        File file = new File(Objects.requireNonNull(multipartFile.getOriginalFilename()));
+        multipartFile.transferTo(file);
+        return file;
+    }
+
 
     @Override
     public Image changeStates(Image source, Image destination) {

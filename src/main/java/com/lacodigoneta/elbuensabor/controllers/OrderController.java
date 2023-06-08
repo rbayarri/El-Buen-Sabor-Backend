@@ -85,7 +85,7 @@ public class OrderController {
         return ResponseEntity.ok(allForCashier.map(mapper::toOrderDto));
     }
 
-    @PatchMapping("/{id}/newState/cooking")
+    @PatchMapping("/newState/cooking/{id}")
     @PreAuthorize("hasRole('ROLE_CASHIER')")
     public ResponseEntity<OrderDto> markAsCooking(@PathVariable UUID id) {
         Order order = service.changeState(id, Status.COOKING);
@@ -93,7 +93,7 @@ public class OrderController {
         return ResponseEntity.ok(orderDto);
     }
 
-    @PatchMapping("/{id}/newState/ready")
+    @PatchMapping("/newState/ready/{id}")
     @PreAuthorize("hasAnyRole('ROLE_CASHIER', 'ROLE_CHEF')")
     public ResponseEntity<OrderDto> markAsReady(@PathVariable UUID id) {
         Order order = service.changeState(id, Status.READY);
@@ -101,7 +101,7 @@ public class OrderController {
         return ResponseEntity.ok(orderDto);
     }
 
-    @PatchMapping("/{id}/newState/delivery")
+    @PatchMapping("/newState/delivery/{id}")
     @PreAuthorize("hasRole('ROLE_CASHIER')")
     public ResponseEntity<OrderDto> markAsOnTheWay(@PathVariable UUID id) {
         Order order = service.changeState(id, Status.ON_THE_WAY);
@@ -109,7 +109,7 @@ public class OrderController {
         return ResponseEntity.ok(orderDto);
     }
 
-    @PatchMapping("/{id}/newState/delivered")
+    @PatchMapping("/newState/delivered/{id}")
     @PreAuthorize("hasAnyRole('ROLE_CASHIER', 'ROLE_DELIVERY')")
     public ResponseEntity<OrderDto> markAsDelivered(@PathVariable UUID id) {
         Order order = service.changeState(id, Status.DELIVERED);

@@ -44,14 +44,14 @@ public class IngredientController {
         return ResponseEntity.ok(service.findAllByActive().stream().map(mapper::toIngredientDto).collect(Collectors.toList()));
     }
 
-    @PostMapping("/{id}/updateCost")
+    @PostMapping("/updateCost/{id}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_CHEF')")
     public ResponseEntity<IngredientDto> updateCost(@PathVariable UUID id, @RequestBody @Valid UpdateIngredientCost updateIngredientCost) {
         Ingredient ingredient = ingredientPurchaseService.updateCost(id, updateIngredientCost);
         return ResponseEntity.ok(mapper.toIngredientDto(ingredient));
     }
 
-    @PostMapping("/{id}/updateStock")
+    @PostMapping("/updateStock/{id}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_CHEF')")
     public ResponseEntity<IngredientDto> updateStock(@PathVariable UUID id, @RequestBody @Valid UpdateIngredientStock updateIngredientStock) {
         Ingredient ingredient = ingredientPurchaseService.updateStock(id, updateIngredientStock);
@@ -84,6 +84,4 @@ public class IngredientController {
                                 .toUri())
                 .body(updatedIngredientDto);
     }
-
-
 }

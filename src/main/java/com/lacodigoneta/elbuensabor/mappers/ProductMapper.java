@@ -57,7 +57,7 @@ public class ProductMapper {
         productDto.setCategory(categoryDto);
 
         if (!Objects.isNull(product.getImage())) {
-            ImageDto imageDto = mapper.map(product.getImage(), ImageDto.class);
+            ImageDto imageDto = imageMapper.toImageDto(product.getImage());
             productDto.setImage(imageDto);
         }
 

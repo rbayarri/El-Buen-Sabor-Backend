@@ -9,9 +9,12 @@ import com.lacodigoneta.elbuensabor.enums.Status;
 import com.lacodigoneta.elbuensabor.exceptions.InvalidParentException;
 import com.lacodigoneta.elbuensabor.exceptions.ProductException;
 import com.lacodigoneta.elbuensabor.repositories.ProductRepository;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
@@ -134,11 +137,12 @@ public class ProductService extends BaseServiceImpl<Product, ProductRepository> 
         validateCategoryIsContainer(category);
         validateCategoryIsActive(category);
 
-        if (!Objects.isNull(product.getImage())) {
-            ImageService imageService = imageServiceFactory.getObject(false);
-            Image imageDatabase = imageService.findById(product.getImage().getId());
-            product.setImage(imageDatabase);
-        }
+        //New save method not longer require this code
+//        if (!Objects.isNull(product.getImage())) {
+//            ImageService imageService = imageServiceFactory.getObject(false);
+//            Image imageDatabase = imageService.findById(product.getImage().getId());
+//            product.setImage(imageDatabase);
+//        }
     }
 
     @Override
@@ -187,5 +191,16 @@ public class ProductService extends BaseServiceImpl<Product, ProductRepository> 
         if (!category.getType().equals(CategoryType.PRODUCT)) {
             throw new InvalidParentException(NOT_FOR_PRODUCTS_CATEGORY);
         }
+    }
+
+    @Transactional(rollbackOn = Exception.class)
+    public Product newSave(Product product, MultipartFile file, String url) throws IOException {
+
+        ImageService imageService = imageServiceFactory.getObject(Objects.nonNull(file));
+        Image saved = imageService.save(Objects.nonNull(file) ? file : url);
+
+        product.setImage(saved);
+        beforeSaveValidations(product);
+        return completeEntity(repository.save(product));
     }
 }
