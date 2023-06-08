@@ -61,20 +61,6 @@ public class ProductController {
         return ResponseEntity.ok(activeProductsByCategoryRoot.stream().map(mapper::toClientProductDto).toList());
     }
 
-//    @PostMapping("")
-//    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_CHEF')")
-//    public ResponseEntity<ProductDto> save(@RequestBody @Valid ProductDto productDto) {
-//        Product saved = service.save(mapper.toEntity(productDto));
-//        ProductDto savedProductDto = mapper.toProductDto(saved);
-//        return ResponseEntity.created(
-//                        ServletUriComponentsBuilder.fromCurrentRequestUri()
-//                                .path("/{id}")
-//                                .buildAndExpand(savedProductDto.getId())
-//                                .toUri())
-//                .body(savedProductDto);
-//    }
-
-
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_CHEF')")
     public ResponseEntity<ProductDto> update(@PathVariable UUID id, @RequestBody @Valid ProductDto productDto) {
@@ -103,5 +89,21 @@ public class ProductController {
                                 .buildAndExpand(savedProductDto.getId())
                                 .toUri())
                 .body(savedProductDto);
+    }
+
+    @PutMapping(value = "/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_CHEF')")
+    public ResponseEntity<ProductDto> newUpdate(@PathVariable UUID id,
+                                                @RequestPart("product") @Valid ProductDto productDto,
+                                                @RequestPart(value = "image", required = false) MultipartFile file,
+                                                @RequestPart(value = "imageUrl", required = false) String url) {
+        Product updated = service.newUpdate(id, mapper.toEntity(productDto), file, url);
+        ProductDto updatedProductDto = mapper.toProductDto(updated);
+
+        return ResponseEntity.created(
+                        ServletUriComponentsBuilder.fromCurrentRequestUri()
+                                .build()
+                                .toUri())
+                .body(updatedProductDto);
     }
 }

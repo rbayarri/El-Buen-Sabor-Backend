@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.lacodigoneta.elbuensabor.config.AppConstants.*;
@@ -195,11 +196,45 @@ public class ProductService extends BaseServiceImpl<Product, ProductRepository> 
     @Transactional(rollbackOn = Exception.class)
     public Product newSave(Product product, MultipartFile file, String url) {
 
-        ImageService imageService = imageServiceFactory.getObject(Objects.nonNull(file));
-        Image saved = imageService.save(Objects.nonNull(file) ? file : url);
-
-        product.setImage(saved);
+        if (Objects.nonNull(file) || Objects.nonNull(url)) {
+            ImageService imageService = imageServiceFactory.getObject(Objects.nonNull(file));
+            Image saved = imageService.save(Objects.nonNull(file) ? file : url);
+            product.setImage(saved);
+        }
         beforeSaveValidations(product);
         return completeEntity(repository.save(product));
+    }
+
+    @Transactional(rollbackOn = Exception.class)
+    public Product newUpdate(UUID id, Product product, MultipartFile file, String url) {
+
+        Product byId = findById(id);
+
+        if (Objects.nonNull(file)) {
+            ImageService imageService = imageServiceFactory.getObject(Objects.nonNull(file));
+            Image saved = imageService.save(Objects.nonNull(file) ? file : url);
+            byId.setImage(saved);
+        } else {
+            if (Objects.nonNull(url)) {
+                if (Objects.nonNull(byId.getImage())) {
+                    if (!byId.getImage().getLocation().equals(url)) {
+                        ImageService imageService = imageServiceFactory.getObject(Objects.nonNull(file));
+                        Image saved = imageService.save(Objects.nonNull(file) ? file : url);
+                        byId.setImage(saved);
+                    }
+                } else {
+                    ImageService imageService = imageServiceFactory.getObject(Objects.nonNull(file));
+                    Image saved = imageService.save(Objects.nonNull(file) ? file : url);
+                    byId.setImage(saved);
+                }
+            } else {
+                if (Objects.nonNull(byId.getImage())) {
+                    byId.setImage(null);
+                }
+            }
+        }
+
+        changeStates(product, byId);
+        return completeEntity(byId);
     }
 }

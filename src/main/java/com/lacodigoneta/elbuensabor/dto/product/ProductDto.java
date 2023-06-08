@@ -54,7 +54,7 @@ public class ProductDto {
     @NoDuplicatedIngredients(message = DUPLICATED_INGREDIENTS_VALIDATION_MESSAGE)
     private List<@Valid ProductDetailDto> productDetails;
 
-    @Valid
+    @Null
     private ImageDto image;
 
 }

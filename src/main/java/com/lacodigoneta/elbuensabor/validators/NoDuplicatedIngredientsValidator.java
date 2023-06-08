@@ -15,8 +15,8 @@ public class NoDuplicatedIngredientsValidator implements ConstraintValidator<NoD
     @Override
     public boolean isValid(List<ProductDetailDto> value, ConstraintValidatorContext context) {
         try {
-            return value.stream().map(ProductDetailDto::getIngredient).distinct().count() == value.size();
-        }catch(Exception e){
+            return value.stream().map(pd -> pd.getIngredient().getId()).distinct().count() == value.size();
+        } catch (Exception e) {
             throw new IllegalArgumentException("Invalid request");
         }
     }

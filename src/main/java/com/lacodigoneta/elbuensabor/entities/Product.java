@@ -39,7 +39,7 @@ public class Product extends BaseEntity {
     @Transient
     private Integer stock;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductDetail> productDetails;
 
     @OneToMany(mappedBy = "product")
