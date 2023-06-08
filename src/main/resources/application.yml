@@ -12,6 +12,25 @@ spring:
   servlet:
     multipart:
       max-file-size: 5MB
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: lacodigoneta@gmail.com
+    password: qunztbndxzfikjvv
+    properties:
+      mail:
+        smtp:
+          auth: true
+          timeout: 5000
+          writetimeout: 5000
+          connectiontimeout: 5000
+          ssl:
+            trust: "*"
+          starttls:
+            enable: true
+            required: true
+
 upload:
   dir: ./uploads/images/
 security:

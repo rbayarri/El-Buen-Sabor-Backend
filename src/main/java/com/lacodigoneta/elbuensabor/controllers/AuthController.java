@@ -1,26 +1,27 @@
 package com.lacodigoneta.elbuensabor.controllers;
 
-import com.lacodigoneta.elbuensabor.dto.auth.AuthenticationRequest;
-import com.lacodigoneta.elbuensabor.dto.auth.AuthenticationResponse;
-import com.lacodigoneta.elbuensabor.dto.auth.GoogleAuthentication;
-import com.lacodigoneta.elbuensabor.dto.auth.RegistrationRequest;
+import com.lacodigoneta.elbuensabor.dto.auth.*;
 import com.lacodigoneta.elbuensabor.dto.user.CreatedUser;
+import com.lacodigoneta.elbuensabor.dto.user.NewPassword;
 import com.lacodigoneta.elbuensabor.entities.User;
+import com.lacodigoneta.elbuensabor.entities.VerifyEmailToken;
 import com.lacodigoneta.elbuensabor.mappers.UserMapper;
+import com.lacodigoneta.elbuensabor.services.JavaMailService;
 import com.lacodigoneta.elbuensabor.services.JwtService;
 import com.lacodigoneta.elbuensabor.services.UserService;
+import com.lacodigoneta.elbuensabor.services.VerifyEmailTokenService;
+import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.time.LocalDate;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -33,6 +34,10 @@ public class AuthController {
 
     private final UserMapper mapper;
 
+    private final JavaMailService mailService;
+
+    private final VerifyEmailTokenService verifyEmailTokenService;
+
     @PostMapping("/authentication")
     public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody @Valid AuthenticationRequest authenticationRequest) {
         return ResponseEntity.ok(service.authenticate(authenticationRequest));
@@ -42,8 +47,19 @@ public class AuthController {
     public ResponseEntity<AuthenticationResponse> register(@RequestBody @Valid RegistrationRequest registrationRequest) {
 
         User saved = service.save(mapper.toEntity(registrationRequest));
+        VerifyEmailToken token = new VerifyEmailToken(saved, LocalDate.now().plusDays(1));
+        VerifyEmailToken savedToken = verifyEmailTokenService.save(token);
+        try {
+            mailService.sendHtml("lacodigoneta@gmail.com", saved.getUsername(), "¡Bienvenido!",
+                    "<p>Gracias por registrarte en nuestro sitio web</p>" +
+                            "<p>Por favor haga click en el siguiente enlace para verificar su email</p>" +
+                            "<a href='http://localhost:5173/verifyEmail/" + saved.getId() + "/" + savedToken.getId() + "'>" +
+                            "http://localhost:5173/verifyEmail/" + saved.getId() + "/" + savedToken.getId() + "</a>"
+            );
+        } catch (MessagingException ex) {
+            throw new RuntimeException(ex.getMessage());
+        }
         return ResponseEntity.ok(new AuthenticationResponse(jwtService.createToken(saved, false)));
-
     }
 
     @PostMapping("/googleLoginSignup")
@@ -70,4 +86,30 @@ public class AuthController {
                 .body(createdUser);
     }
 
+    @PostMapping("/verifyEmail/{userId}/{tokenId}")
+    public ResponseEntity<?> verifyEmail(@PathVariable UUID userId,
+                                         @PathVariable UUID tokenId) {
+        service.validateEmail(userId, tokenId);
+        return ResponseEntity.ok("Email verificado");
+    }
+
+    @PostMapping("/forgetPassword")
+    public ResponseEntity<?> forgetPassword(@RequestBody @Valid ForgetPasswordRequest request) {
+        service.forgetPassword(request);
+        return ResponseEntity.ok(new BasicResponse("Correo Enviado"));
+    }
+
+    @PostMapping("/verifyForgetPasswordToken/{userId}/{tokenId}")
+    public ResponseEntity<?> verifyForgetPasswordToken(@PathVariable UUID userId,
+                                                       @PathVariable UUID tokenId) {
+        service.validateForgetPasswordToken(userId, tokenId);
+        return ResponseEntity.ok("Token válido");
+    }
+
+    @PostMapping("/resetPassword/{userId}/{tokenId}")
+    public ResponseEntity<?> resetPassword(@PathVariable UUID userId,
+                                           @PathVariable UUID tokenId,
+                                           @RequestBody @Valid NewPassword request) {
+        return ResponseEntity.ok(service.resetPassword(userId, tokenId, request));
+    }
 }

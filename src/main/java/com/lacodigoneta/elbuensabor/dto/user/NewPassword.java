@@ -16,7 +16,6 @@ public class NewPassword {
 
     @NotNull(message = NOT_NULL_VALIDATION_MESSAGE)
     @Pattern(regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}$", message = PASSWORD_PATTERN_VALIDATION_MESSAGE)
-
     private String newPassword;
 
 }

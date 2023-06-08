@@ -65,6 +65,4 @@ public class UserController {
         return ResponseEntity.ok(service.updatePassword(newPassword));
     }
 
-    //TODO: Olvidé contraseña
-
 }

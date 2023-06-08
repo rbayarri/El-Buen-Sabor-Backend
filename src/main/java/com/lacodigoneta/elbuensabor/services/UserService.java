@@ -2,17 +2,21 @@ package com.lacodigoneta.elbuensabor.services;
 
 import com.lacodigoneta.elbuensabor.dto.auth.AuthenticationRequest;
 import com.lacodigoneta.elbuensabor.dto.auth.AuthenticationResponse;
+import com.lacodigoneta.elbuensabor.dto.auth.ForgetPasswordRequest;
 import com.lacodigoneta.elbuensabor.dto.user.NewPassword;
 import com.lacodigoneta.elbuensabor.dto.user.ProfileUserDto;
 import com.lacodigoneta.elbuensabor.dto.user.UpdateUser;
+import com.lacodigoneta.elbuensabor.entities.ForgetPasswordToken;
 import com.lacodigoneta.elbuensabor.entities.Image;
 import com.lacodigoneta.elbuensabor.entities.User;
+import com.lacodigoneta.elbuensabor.entities.VerifyEmailToken;
 import com.lacodigoneta.elbuensabor.enums.Role;
 import com.lacodigoneta.elbuensabor.exceptions.InvalidCredentialsException;
 import com.lacodigoneta.elbuensabor.exceptions.NoLoggedUserException;
 import com.lacodigoneta.elbuensabor.mappers.ImageMapper;
 import com.lacodigoneta.elbuensabor.mappers.UserMapper;
 import com.lacodigoneta.elbuensabor.repositories.UserRepository;
+import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,6 +25,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -39,13 +44,12 @@ public class UserService extends BaseServiceImpl<User, UserRepository> {
 
     private final ImageMapper imageMapper;
 
-    public UserService(UserRepository repository,
-                       AuthenticationManager authenticationManager,
-                       PasswordEncoder passwordEncoder,
-                       JwtService jwtService,
-                       ImageUrlService imageUrlService,
-                       UserMapper mapper,
-                       ImageMapper imageMapper) {
+    private final VerifyEmailTokenService verifyEmailTokenService;
+    private final ForgetPasswordTokenService forgetPasswordTokenService;
+
+    private final JavaMailService mailService;
+
+    public UserService(UserRepository repository, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, JwtService jwtService, ImageUrlService imageUrlService, UserMapper mapper, ImageMapper imageMapper, VerifyEmailTokenService verifyEmailTokenService, ForgetPasswordTokenService forgetPasswordTokenService, JavaMailService mailService) {
         super(repository);
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
@@ -53,6 +57,9 @@ public class UserService extends BaseServiceImpl<User, UserRepository> {
         this.imageUrlService = imageUrlService;
         this.mapper = mapper;
         this.imageMapper = imageMapper;
+        this.verifyEmailTokenService = verifyEmailTokenService;
+        this.forgetPasswordTokenService = forgetPasswordTokenService;
+        this.mailService = mailService;
     }
 
     public User findUserByUsernameAndActiveTrue(String username) {
@@ -168,6 +175,66 @@ public class UserService extends BaseServiceImpl<User, UserRepository> {
     public String updatePassword(NewPassword newPassword) {
         User user = getLoggedUser();
         user.setPassword(passwordEncoder.encode(newPassword.getNewPassword()));
+        return "Contraseña cambiada con éxito";
+    }
+
+    @Transactional
+    public void validateEmail(UUID userId, UUID tokenId) {
+        User userById = findById(userId);
+        VerifyEmailToken tokenById = verifyEmailTokenService.findById(tokenId);
+
+        if (Objects.nonNull(tokenById) && Objects.nonNull(userById)) {
+            if (tokenById.getUser().equals(userById) && tokenById.getExpiration().isAfter(LocalDate.now())) {
+                userById.setEmailConfirmed(true);
+                tokenById.setExpiration(LocalDate.now());
+                return;
+            }
+        }
+        throw new RuntimeException("Token inválido");
+    }
+
+    public void forgetPassword(ForgetPasswordRequest request) {
+
+        User user = findUserByUsernameAndActiveTrue(request.getUsername());
+        if (Objects.isNull(user)) {
+            throw new RuntimeException("Usuari no encontrado");
+        }
+
+        ForgetPasswordToken token = new ForgetPasswordToken(user, LocalDate.now().plusDays(1));
+        ForgetPasswordToken savedToken = forgetPasswordTokenService.save(token);
+
+        try {
+            mailService.sendHtml("lacodigoneta@gmail.com", user.getUsername(), "¡Bienvenido!",
+                    "<p>Haga click en el siguiente enlace para restablecer su contraseña</p>" +
+                            "<a href='http://localhost:5173/resetPassword/" + user.getId() + "/" + savedToken.getId() + "'>" +
+                            "http://localhost:5173/resetPassword/" + user.getId() + "/" + savedToken.getId() + "</a>"
+            );
+        } catch (MessagingException ex) {
+            throw new RuntimeException(ex.getMessage());
+        }
+
+    }
+
+    public void validateForgetPasswordToken(UUID userId, UUID tokenId) {
+        User userById = findById(userId);
+        ForgetPasswordToken tokenById = forgetPasswordTokenService.findById(tokenId);
+
+        if (Objects.nonNull(tokenById) && Objects.nonNull(userById)) {
+            if (tokenById.getUser().equals(userById) && tokenById.getExpiration().isAfter(LocalDate.now())) {
+                return;
+            }
+        }
+        throw new RuntimeException("Token inválido");
+    }
+
+    @Transactional
+    public String resetPassword(UUID userId, UUID tokenId, NewPassword request) {
+        validateForgetPasswordToken(userId, tokenId);
+        User userById = findById(userId);
+        ForgetPasswordToken tokenById = forgetPasswordTokenService.findById(tokenId);
+
+        userById.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        tokenById.setExpiration(LocalDate.now());
         return "Contraseña cambiada con éxito";
     }
 }
