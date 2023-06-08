@@ -5,7 +5,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -13,11 +13,11 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(name = "verify_email_tokens")
-public class ForgetPasswordToken extends BaseEntity{
+@Table(name = "forget_password_tokens")
+public class ForgetPasswordToken extends BaseEntity {
 
     @ManyToOne
     private User user;
 
-    private LocalDate expiration;
+    private LocalDateTime expiration;
 }

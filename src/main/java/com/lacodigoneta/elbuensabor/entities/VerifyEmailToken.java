@@ -5,7 +5,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -19,5 +19,5 @@ public class VerifyEmailToken extends BaseEntity {
     @ManyToOne
     private User user;
 
-    private LocalDate expiration;
+    private LocalDateTime expiration;
 }

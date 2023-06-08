@@ -20,7 +20,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @RestController
@@ -47,7 +47,7 @@ public class AuthController {
     public ResponseEntity<AuthenticationResponse> register(@RequestBody @Valid RegistrationRequest registrationRequest) {
 
         User saved = service.save(mapper.toEntity(registrationRequest));
-        VerifyEmailToken token = new VerifyEmailToken(saved, LocalDate.now().plusDays(1));
+        VerifyEmailToken token = new VerifyEmailToken(saved, LocalDateTime.now().plusDays(1));
         VerifyEmailToken savedToken = verifyEmailTokenService.save(token);
         try {
             mailService.sendHtml("lacodigoneta@gmail.com", saved.getUsername(), "¡Bienvenido!",

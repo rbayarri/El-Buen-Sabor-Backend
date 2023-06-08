@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.Length;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -40,7 +41,7 @@ public class ProductDto {
     @Valid
     private CategoryDto category;
 
-    @NotEmpty(message = NOT_EMPTY_VALIDATION_MESSAGE)
+    @Length(min = 1, message = NOT_EMPTY_VALIDATION_MESSAGE)
     private String recipe;
 
     @NotNull(message = NOT_NULL_VALIDATION_MESSAGE)

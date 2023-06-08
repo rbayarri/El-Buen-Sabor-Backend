@@ -25,7 +25,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -184,9 +184,9 @@ public class UserService extends BaseServiceImpl<User, UserRepository> {
         VerifyEmailToken tokenById = verifyEmailTokenService.findById(tokenId);
 
         if (Objects.nonNull(tokenById) && Objects.nonNull(userById)) {
-            if (tokenById.getUser().equals(userById) && tokenById.getExpiration().isAfter(LocalDate.now())) {
+            if (tokenById.getUser().equals(userById) && tokenById.getExpiration().isAfter(LocalDateTime.now())) {
                 userById.setEmailConfirmed(true);
-                tokenById.setExpiration(LocalDate.now());
+                tokenById.setExpiration(LocalDateTime.now());
                 return;
             }
         }
@@ -200,7 +200,7 @@ public class UserService extends BaseServiceImpl<User, UserRepository> {
             throw new RuntimeException("Usuari no encontrado");
         }
 
-        ForgetPasswordToken token = new ForgetPasswordToken(user, LocalDate.now().plusDays(1));
+        ForgetPasswordToken token = new ForgetPasswordToken(user, LocalDateTime.now().plusDays(1));
         ForgetPasswordToken savedToken = forgetPasswordTokenService.save(token);
 
         try {
@@ -220,7 +220,7 @@ public class UserService extends BaseServiceImpl<User, UserRepository> {
         ForgetPasswordToken tokenById = forgetPasswordTokenService.findById(tokenId);
 
         if (Objects.nonNull(tokenById) && Objects.nonNull(userById)) {
-            if (tokenById.getUser().equals(userById) && tokenById.getExpiration().isAfter(LocalDate.now())) {
+            if (tokenById.getUser().equals(userById) && tokenById.getExpiration().isAfter(LocalDateTime.now())) {
                 return;
             }
         }
@@ -234,7 +234,7 @@ public class UserService extends BaseServiceImpl<User, UserRepository> {
         ForgetPasswordToken tokenById = forgetPasswordTokenService.findById(tokenId);
 
         userById.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        tokenById.setExpiration(LocalDate.now());
+        tokenById.setExpiration(LocalDateTime.now());
         return "Contraseña cambiada con éxito";
     }
 }
