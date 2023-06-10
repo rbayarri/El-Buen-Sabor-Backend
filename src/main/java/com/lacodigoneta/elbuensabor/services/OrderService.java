@@ -58,13 +58,27 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
         return repository.findAllByUserOrderByDateTimeAsc(byId, pageable);
     }
 
+    public List<Order> findAllByUserId(UUID id) {
+        User byId = userService.findById(id);
+        return repository.findAllByUserOrderByDateTimeAsc(byId);
+    }
+
     public Page<Order> findMyOrders(Pageable pageable) {
         User user = userService.getLoggedUser();
         return repository.findAllByUserOrderByDateTimeAsc(user, pageable);
     }
 
+    public List<Order> findMyOrders() {
+        User user = userService.getLoggedUser();
+        return repository.findAllByUserOrderByDateTimeAsc(user);
+    }
+
     public Page<Order> findAllForCashier(Pageable pageable) {
         return repository.findAllByDateTimeBetweenOrderByDateTimeDesc(LocalDateTime.now().minusHours(6), LocalDateTime.now(), pageable);
+    }
+
+    public List<Order> findAllForCashier() {
+        return repository.findAllByDateTimeBetweenOrderByDateTimeDesc(LocalDateTime.now().minusHours(6), LocalDateTime.now());
     }
 
     @Override
@@ -77,7 +91,7 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
 
         User user = userService.getLoggedUser();
 
-        if(!user.isEmailConfirmed()){
+        if (!user.isEmailConfirmed()) {
             throw new NotAllowedOperationException(UNCONFIRMED_EMAIL);
         }
 
@@ -132,6 +146,11 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
                 throw new NotAllowedOperationException(INSUFFICIENT_STOCK_FOR_ORDER);
             }
         });
+
+        for (OrderDetail orderDetail : entity.getOrderDetails()) {
+            orderDetail.setDiscount(BigDecimal.ZERO);
+            orderDetail.setUnitPrice(orderDetail.getProduct().getPrice());
+        }
     }
 
     @Override

@@ -57,9 +57,14 @@ public class ProductService extends BaseServiceImpl<Product, ProductRepository> 
         if (!destination.getDescription().equals(source.getDescription())) {
             destination.setDescription(source.getDescription());
         }
-        if (!destination.getRecipe().equals(source.getRecipe())) {
+        if (Objects.nonNull(destination.getRecipe())) {
+            if (!destination.getRecipe().equals(source.getRecipe())) {
+                destination.setRecipe(source.getRecipe());
+            }
+        } else if (Objects.nonNull(source.getRecipe())) {
             destination.setRecipe(source.getRecipe());
         }
+
         if (!destination.getCookingTime().equals(source.getCookingTime())) {
             destination.setCookingTime(source.getCookingTime());
         }
@@ -136,13 +141,6 @@ public class ProductService extends BaseServiceImpl<Product, ProductRepository> 
         validateCategoryTypeIngredient(category);
         validateCategoryIsContainer(category);
         validateCategoryIsActive(category);
-
-        //New save method not longer require this code
-//        if (!Objects.isNull(product.getImage())) {
-//            ImageService imageService = imageServiceFactory.getObject(false);
-//            Image imageDatabase = imageService.findById(product.getImage().getId());
-//            product.setImage(imageDatabase);
-//        }
     }
 
     @Override
@@ -158,12 +156,12 @@ public class ProductService extends BaseServiceImpl<Product, ProductRepository> 
             productDetailService.completeIngredient(pd.getIngredient());
         });
 
-        BigDecimal price = BigDecimal.ZERO;
+        final BigDecimal[] price = {BigDecimal.ZERO};
         product.getProductDetails().forEach(pd -> {
-            price.add(pd.getIngredient().getLastCost().multiply(pd.getQuantity()));
+            price[0] = price[0].add(pd.getIngredient().getLastCost().multiply(pd.getQuantity()));
         });
 
-        product.setPrice(price.multiply(product.getProfitMargin()));
+        product.setPrice(price[0].multiply(product.getProfitMargin()));
     }
 
     private void addStock(Product product) {

@@ -43,12 +43,13 @@ public class ClientOrderDto {
     @NotNull(message = NOT_NULL_VALIDATION_MESSAGE)
     private PaymentMethod paymentMethod;
 
-    @NotNull(message = NOT_NULL_VALIDATION_MESSAGE)
+    @Null(message = NULL_VALIDATION_MESSAGE)
     private Boolean paid;
 
     @Null(message = NULL_VALIDATION_MESSAGE)
     private Status status;
 
+    @Null(message = NULL_VALIDATION_MESSAGE)
     @PositiveOrZero(message = POSITIVE_OR_ZERO_VALIDATION_MESSAGE)
     private BigDecimal discount;
 

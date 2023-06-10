@@ -2,6 +2,7 @@ package com.lacodigoneta.elbuensabor.dto.orderdetails;
 
 import com.lacodigoneta.elbuensabor.dto.product.SimpleProductDto;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Null;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
@@ -26,11 +27,11 @@ public class ClientOrderDetailDto {
     @Positive(message = POSITIVE_VALIDATION_MESSAGE)
     private Integer quantity;
 
-    @NotNull(message = NOT_NULL_VALIDATION_MESSAGE)
+    @Null(message = NULL_VALIDATION_MESSAGE)
     @Positive(message = POSITIVE_VALIDATION_MESSAGE)
     private BigDecimal unitPrice;
 
-    @NotNull(message = NOT_NULL_VALIDATION_MESSAGE)
+    @Null(message = NULL_VALIDATION_MESSAGE)
     @PositiveOrZero(message = POSITIVE_OR_ZERO_VALIDATION_MESSAGE)
     private BigDecimal discount;
 

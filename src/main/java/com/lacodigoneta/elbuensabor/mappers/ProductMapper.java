@@ -45,8 +45,8 @@ public class ProductMapper {
                 .map(productDetailMapper::toProductDetailDto)
                 .toList());
 
-        if (!Objects.isNull(product.getImage())) {
-            clientProductDto.setImage(mapper.map(product.getImage(), ImageDto.class));
+        if (Objects.nonNull(product.getImage())) {
+            clientProductDto.setImage(imageMapper.toImageDto(product.getImage()));
         }
         return clientProductDto;
     }
