@@ -1,6 +1,5 @@
 package com.lacodigoneta.elbuensabor.dto.user;
 
-import com.lacodigoneta.elbuensabor.dto.ImageDto;
 import com.lacodigoneta.elbuensabor.enums.Role;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
@@ -23,8 +22,6 @@ public class UpdateUser {
 
     @NotEmpty(message = NOT_EMPTY_VALIDATION_MESSAGE)
     private String lastName;
-
-    private ImageDto image;
 
     private boolean active;
 

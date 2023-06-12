@@ -44,6 +44,8 @@ public class JavaMailService {
         helper.setTo(to);
         helper.setSubject(subject);
         helper.setText(text, true);
+        // También puede aceptar ByteArrayResource, implementación de InputStreamSource
+        // ByteArrayResource bar = new ByteArrayResource();
         helper.addAttachment(attachName, inputStream);
         mailSender.send(message);
     }

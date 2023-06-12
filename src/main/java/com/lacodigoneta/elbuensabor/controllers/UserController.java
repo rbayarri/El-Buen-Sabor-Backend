@@ -10,9 +10,11 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -44,18 +46,23 @@ public class UserController {
         return ResponseEntity.ok(service.getProfileInformation());
     }
 
-    @PutMapping("")
+    @PutMapping(value = "", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER', 'ROLE_CASHIER', 'ROLE_CHEF', 'ROLE_DELIVERY')")
-    public ResponseEntity<ProfileUserDto> update(@RequestBody @Valid UpdateUser updateUser) {
-        User user = service.updateUser(updateUser);
+    public ResponseEntity<ProfileUserDto> update(@RequestPart("user") @Valid UpdateUser updateUser,
+                                                 @RequestPart(value = "image", required = false) MultipartFile file,
+                                                 @RequestPart(value = "imageUrl", required = false) String url) {
+
+        User user = service.updateUser(updateUser, file, url);
         return ResponseEntity.ok(mapper.toProfileUserDto(user));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public ResponseEntity<ProfileUserDto> update(@PathVariable UUID id,
-                                                 @RequestBody @Valid UpdateUser updateUser) {
-        User user = service.updateUser(id, updateUser);
+                                                 @RequestPart("user") @Valid UpdateUser updateUser,
+                                                 @RequestPart(value = "image", required = false) MultipartFile file,
+                                                 @RequestPart(value = "imageUrl", required = false) String url) {
+        User user = service.updateUser(id, updateUser, file, url);
         return ResponseEntity.ok(mapper.toProfileUserDto(user));
     }
 

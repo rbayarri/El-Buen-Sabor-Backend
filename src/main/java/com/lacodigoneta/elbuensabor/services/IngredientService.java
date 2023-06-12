@@ -5,6 +5,7 @@ import com.lacodigoneta.elbuensabor.entities.Ingredient;
 import com.lacodigoneta.elbuensabor.entities.IngredientPurchase;
 import com.lacodigoneta.elbuensabor.entities.OrderDetail;
 import com.lacodigoneta.elbuensabor.enums.CategoryType;
+import com.lacodigoneta.elbuensabor.enums.Status;
 import com.lacodigoneta.elbuensabor.exceptions.CategoryException;
 import com.lacodigoneta.elbuensabor.exceptions.IngredientException;
 import com.lacodigoneta.elbuensabor.exceptions.InvalidParentException;
@@ -114,10 +115,12 @@ public class IngredientService extends BaseServiceImpl<Ingredient, IngredientRep
                     .reduce(currentStock, BigDecimal::add);
         }
 
-        if(Objects.nonNull(ingredient.getProductDetails())) {
+        if (Objects.nonNull(ingredient.getProductDetails())) {
             currentStock = ingredient.getProductDetails().stream()
                     .map(pd -> {
                         int quantityOfProductOrdered = pd.getProduct().getOrderDetails().stream()
+                                //TODO: Actualmente no resta el stock si la orden está cancelada, independientemente del estado que pudo haber tenido la orden
+                                .filter(orderDetail -> !orderDetail.getOrder().getStatus().equals(Status.CANCELLED))
                                 .mapToInt(OrderDetail::getQuantity)
                                 .sum();
                         return pd.getQuantity().multiply(BigDecimal.valueOf(quantityOfProductOrdered));

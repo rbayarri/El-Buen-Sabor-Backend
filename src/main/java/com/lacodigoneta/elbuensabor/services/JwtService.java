@@ -117,11 +117,16 @@ public class JwtService {
         String familyName = (String) payload.get("family_name");
         String givenName = (String) payload.get("given_name");
 
-
-        Image image = Image.builder()
-                .location(pictureUrl)
-                .build();
-
+        Image image;
+        if (pictureUrl.isEmpty()) {
+            image = Image.builder()
+                    .location("https://objetivoligar.com/wp-content/uploads/2017/03/blank-profile-picture-973460_1280.jpg")
+                    .build();
+        } else {
+            image = Image.builder()
+                    .location(pictureUrl)
+                    .build();
+        }
         return User.builder()
                 .username(email)
                 .name(givenName)

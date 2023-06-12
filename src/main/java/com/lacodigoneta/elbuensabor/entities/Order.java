@@ -60,4 +60,10 @@ public class Order extends BaseEntity {
 
     @Transient
     private int totalTime;
+
+    @Column(unique = true)
+    private String preferenceId;
+
+    @Column(unique = true)
+    private String paymentId;
 }

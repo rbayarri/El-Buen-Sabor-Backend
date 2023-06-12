@@ -32,17 +32,15 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
 
     private final PhoneNumberService phoneNumberService;
 
+    private final InvoiceService invoiceService;
 
-    public OrderService(OrderRepository repository,
-                        UserService userService,
-                        ProductService productService,
-                        AddressService addressService,
-                        PhoneNumberService phoneNumberService) {
+    public OrderService(OrderRepository repository, UserService userService, ProductService productService, AddressService addressService, PhoneNumberService phoneNumberService, InvoiceService invoiceService) {
         super(repository);
         this.userService = userService;
         this.productService = productService;
         this.addressService = addressService;
         this.phoneNumberService = phoneNumberService;
+        this.invoiceService = invoiceService;
     }
 
     public Page<Order> findAllByStatus(Status status, Pageable pageable) {
@@ -79,6 +77,10 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
 
     public List<Order> findAllForCashier() {
         return repository.findAllByDateTimeBetweenOrderByDateTimeDesc(LocalDateTime.now().minusHours(6), LocalDateTime.now());
+    }
+
+    public Order findByPreferenceId(String preferenceId) {
+        return repository.findByPreferenceId(preferenceId);
     }
 
     @Override
@@ -119,6 +121,7 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
         }
 
         entity.setStatus(Status.PENDING);
+        entity.setPaid(false);
 
         if (entity.getDeliveryMethod().equals(DeliveryMethod.HOME_DELIVERY) && entity.getPaymentMethod().equals(PaymentMethod.CASH)) {
             throw new NotAllowedOperationException(FORBIDDEN_OPERATION);
@@ -246,5 +249,39 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
 
         order.setStatus(status);
         return completeEntity(order);
+    }
+
+    @Transactional(rollbackOn = Exception.class)
+    public Order pay(UUID id) {
+        Order order = findById(id);
+        if (order.isPaid()) {
+            throw new RuntimeException("Orden ya pagada");
+        }
+        if (!order.getDeliveryMethod().equals(DeliveryMethod.LOCAL_PICKUP)) {
+            throw new NotAllowedOperationException("El pago debe realizarse a través de Mercado Pago");
+        }
+        order.setPaid(true);
+        Invoice invoice = invoiceService.createInvoice(order);
+        order.setInvoice(invoice);
+        //TODO: Generar pdf y mandar por mail
+        return order;
+    }
+
+    @Transactional(rollbackOn = Exception.class)
+    public Order cancel(UUID id) {
+        Order order = findById(id);
+
+        if (order.getStatus().equals(Status.CANCELLED)) {
+            throw new NotAllowedOperationException("Orden ya cancelada");
+        }
+
+        if (order.isPaid()) {
+            invoiceService.cancel(order);
+            //generarPdfYMail(order.getInvoice().getCreditNote())
+            // TODO: Hacer nota de crédito y mandar por mail
+        }
+
+        order.setStatus(Status.CANCELLED);
+        return order;
     }
 }

@@ -13,7 +13,6 @@ import com.lacodigoneta.elbuensabor.entities.VerifyEmailToken;
 import com.lacodigoneta.elbuensabor.enums.Role;
 import com.lacodigoneta.elbuensabor.exceptions.InvalidCredentialsException;
 import com.lacodigoneta.elbuensabor.exceptions.NoLoggedUserException;
-import com.lacodigoneta.elbuensabor.mappers.ImageMapper;
 import com.lacodigoneta.elbuensabor.mappers.UserMapper;
 import com.lacodigoneta.elbuensabor.repositories.UserRepository;
 import jakarta.mail.MessagingException;
@@ -24,6 +23,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -42,24 +42,25 @@ public class UserService extends BaseServiceImpl<User, UserRepository> {
 
     private final UserMapper mapper;
 
-    private final ImageMapper imageMapper;
-
     private final VerifyEmailTokenService verifyEmailTokenService;
+
     private final ForgetPasswordTokenService forgetPasswordTokenService;
 
     private final JavaMailService mailService;
 
-    public UserService(UserRepository repository, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, JwtService jwtService, ImageUrlService imageUrlService, UserMapper mapper, ImageMapper imageMapper, VerifyEmailTokenService verifyEmailTokenService, ForgetPasswordTokenService forgetPasswordTokenService, JavaMailService mailService) {
+    private final ImageServiceFactory imageServiceFactory;
+
+    public UserService(UserRepository repository, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, JwtService jwtService, ImageUrlService imageUrlService, UserMapper mapper, VerifyEmailTokenService verifyEmailTokenService, ForgetPasswordTokenService forgetPasswordTokenService, JavaMailService mailService, ImageServiceFactory imageServiceFactory) {
         super(repository);
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.imageUrlService = imageUrlService;
         this.mapper = mapper;
-        this.imageMapper = imageMapper;
         this.verifyEmailTokenService = verifyEmailTokenService;
         this.forgetPasswordTokenService = forgetPasswordTokenService;
         this.mailService = mailService;
+        this.imageServiceFactory = imageServiceFactory;
     }
 
     public User findUserByUsernameAndActiveTrue(String username) {
@@ -133,6 +134,7 @@ public class UserService extends BaseServiceImpl<User, UserRepository> {
 
             entity.setRole(Role.USER);
         }
+        saveImage(false, "https://objetivoligar.com/wp-content/uploads/2017/03/blank-profile-picture-973460_1280.jpg", entity);
     }
 
     public ProfileUserDto getProfileInformation() {
@@ -140,30 +142,22 @@ public class UserService extends BaseServiceImpl<User, UserRepository> {
         return mapper.toProfileUserDto(user);
     }
 
-    @Transactional
-    public User updateUser(UpdateUser updateUser) {
+    @Transactional(rollbackOn = Exception.class)
+    public User updateUser(UpdateUser updateUser, MultipartFile file, String url) {
 
         User user = getLoggedUser();
 
-        user.setName(updateUser.getName());
-        user.setImage(imageMapper.toEntity(updateUser.getImage()));
-        user.setLastName(updateUser.getLastName());
+        updateImage(updateUser, file, url, user);
 
-        if (user.getRole().equals(Role.ADMIN)) {
-            user.setRole(updateUser.getRole());
-            user.setActive(updateUser.isActive());
-        }
         return user;
     }
 
     @Transactional
-    public User updateUser(UUID id, UpdateUser updateUser) {
+    public User updateUser(UUID id, UpdateUser updateUser, MultipartFile file, String url) {
 
         User user = findById(id);
 
-        user.setName(updateUser.getName());
-        user.setImage(imageMapper.toEntity(updateUser.getImage()));
-        user.setLastName(updateUser.getLastName());
+        updateImage(updateUser, file, url, user);
 
         user.setRole(updateUser.getRole());
         user.setActive(updateUser.isActive());
@@ -236,5 +230,25 @@ public class UserService extends BaseServiceImpl<User, UserRepository> {
         userById.setPassword(passwordEncoder.encode(request.getNewPassword()));
         tokenById.setExpiration(LocalDateTime.now());
         return "Contraseña cambiada con éxito";
+    }
+
+    private void updateImage(UpdateUser updateUser, MultipartFile file, String url, User user) {
+        boolean hasFile = Objects.nonNull(file);
+        boolean hasUrl = Objects.nonNull(url);
+
+        if (hasFile || (hasUrl && !user.getImage().getLocation().equals(url))) {
+            saveImage(hasFile, hasFile ? file : url, user);
+        } else if (!hasUrl) {
+            saveImage(false, "https://objetivoligar.com/wp-content/uploads/2017/03/blank-profile-picture-973460_1280.jpg", user);
+        }
+
+        user.setName(updateUser.getName());
+        user.setLastName(updateUser.getLastName());
+    }
+
+    private void saveImage(boolean hasFile, Object image, User byId) {
+        ImageService imageService = imageServiceFactory.getObject(hasFile);
+        Image saved = imageService.save(image);
+        byId.setImage(saved);
     }
 }

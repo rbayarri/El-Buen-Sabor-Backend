@@ -192,47 +192,41 @@ public class ProductService extends BaseServiceImpl<Product, ProductRepository> 
     }
 
     @Transactional(rollbackOn = Exception.class)
-    public Product newSave(Product product, MultipartFile file, String url) {
+    public Product save(Product product, MultipartFile file, String url) {
 
-        if (Objects.nonNull(file) || Objects.nonNull(url)) {
-            ImageService imageService = imageServiceFactory.getObject(Objects.nonNull(file));
-            Image saved = imageService.save(Objects.nonNull(file) ? file : url);
-            product.setImage(saved);
+        boolean hasFile = Objects.nonNull(file);
+        boolean hasUrl = Objects.nonNull(url);
+
+        if (hasFile || hasUrl) {
+            saveImage(hasFile, hasFile ? file : url, product);
+        } else {
+            saveImage(false, "https://www.webempresa.com/foro/wp-content/uploads/wpforo/attachments/3200/318277=80538-Sin_imagen_disponible.jpg", product);
         }
         beforeSaveValidations(product);
         return completeEntity(repository.save(product));
     }
 
     @Transactional(rollbackOn = Exception.class)
-    public Product newUpdate(UUID id, Product product, MultipartFile file, String url) {
+    public Product update(UUID id, Product product, MultipartFile file, String url) {
 
         Product byId = findById(id);
 
-        if (Objects.nonNull(file)) {
-            ImageService imageService = imageServiceFactory.getObject(Objects.nonNull(file));
-            Image saved = imageService.save(Objects.nonNull(file) ? file : url);
-            byId.setImage(saved);
-        } else {
-            if (Objects.nonNull(url)) {
-                if (Objects.nonNull(byId.getImage())) {
-                    if (!byId.getImage().getLocation().equals(url)) {
-                        ImageService imageService = imageServiceFactory.getObject(Objects.nonNull(file));
-                        Image saved = imageService.save(Objects.nonNull(file) ? file : url);
-                        byId.setImage(saved);
-                    }
-                } else {
-                    ImageService imageService = imageServiceFactory.getObject(Objects.nonNull(file));
-                    Image saved = imageService.save(Objects.nonNull(file) ? file : url);
-                    byId.setImage(saved);
-                }
-            } else {
-                if (Objects.nonNull(byId.getImage())) {
-                    byId.setImage(null);
-                }
-            }
+        boolean hasFile = Objects.nonNull(file);
+        boolean hasUrl = Objects.nonNull(url);
+
+        if (hasFile || (hasUrl && !byId.getImage().getLocation().equals(url))) {
+            saveImage(hasFile, hasFile ? file : url, byId);
+        } else if (!hasUrl) {
+            saveImage(false, "https://www.webempresa.com/foro/wp-content/uploads/wpforo/attachments/3200/318277=80538-Sin_imagen_disponible.jpg", byId);
         }
 
         changeStates(product, byId);
         return completeEntity(byId);
+    }
+
+    private void saveImage(boolean hasFile, Object image, Product byId) {
+        ImageService imageService = imageServiceFactory.getObject(hasFile);
+        Image saved = imageService.save(image);
+        byId.setImage(saved);
     }
 }

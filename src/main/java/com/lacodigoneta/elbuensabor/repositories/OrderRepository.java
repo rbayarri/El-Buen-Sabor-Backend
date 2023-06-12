@@ -25,4 +25,5 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 
     Page<Order> findAllByDateTimeBetweenOrderByDateTimeDesc(LocalDateTime from, LocalDateTime to, Pageable pageable);
 
+    Order findByPreferenceId(String preferenceId);
 }
