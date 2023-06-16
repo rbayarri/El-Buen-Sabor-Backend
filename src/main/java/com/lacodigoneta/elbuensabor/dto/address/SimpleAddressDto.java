@@ -16,4 +16,16 @@ public class SimpleAddressDto {
 
     @NotNull(message = NOT_NULL_VALIDATION_MESSAGE)
     private UUID id;
+
+    private String street;
+
+    private String number;
+
+    private String floor;
+
+    private String apartment;
+
+    private String zipCode;
+
+    private String details;
 }

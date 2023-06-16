@@ -1,6 +1,5 @@
 package com.lacodigoneta.elbuensabor.services;
 
-import com.lacodigoneta.elbuensabor.entities.Invoice;
 import com.lacodigoneta.elbuensabor.entities.Order;
 import com.lacodigoneta.elbuensabor.entities.OrderDetail;
 import com.lacodigoneta.elbuensabor.entities.User;
@@ -34,7 +33,7 @@ public class MercadoPagoService {
 
     private UserService userService;
 
-    private InvoiceService invoiceService;
+    private JavaMailService mailService;
 
     @Transactional(rollbackOn = Exception.class)
     public Preference createPreference(UUID orderId) throws MPException, MPApiException {
@@ -59,7 +58,7 @@ public class MercadoPagoService {
             items.add(PreferenceItemRequest.builder()
                     .title(orderDetail.getProduct().getName())
                     .quantity(orderDetail.getQuantity())
-                    .unitPrice(orderDetail.getProduct().getPrice().subtract(orderDetail.getDiscount()))
+                    .unitPrice(orderDetail.getUnitPrice().subtract(orderDetail.getDiscount()))
                     .pictureUrl(orderDetail.getProduct().getImage().getLocation())
                     .build());
         }
@@ -77,11 +76,7 @@ public class MercadoPagoService {
                         .path("/api/v1/mercadoPago/success")
                         .build()
                         .toUri().toString())
-                .failure(ServletUriComponentsBuilder
-                        .fromCurrentContextPath()
-                        .path("/api/v1/mercadoPago/failure")
-                        .build()
-                        .toUri().toString())
+                .failure("http://localhost:5173/user/pedidos/" + orderId)
                 .build();
 
         PreferenceClient preferencieClient = new PreferenceClient();
@@ -101,9 +96,7 @@ public class MercadoPagoService {
         return preference;
     }
 
-    @Transactional(rollbackOn = Exception.class)
     public RedirectView processPayment(Long paymentId, String preferenceId) {
-
         try {
             PaymentClient client = new PaymentClient();
             Payment payment = client.get(paymentId);
@@ -115,21 +108,16 @@ public class MercadoPagoService {
             if (!payment.getStatus().equals("approved")) {
                 throw new RuntimeException("Pago no aprobado");
             }
-            Order order = orderService.findByPreferenceId(preferenceId);
-            order.setPaymentId(String.valueOf(paymentId));
-            order.setPaid(true);
-            Invoice invoice = invoiceService.createInvoice(order);
-            order.setInvoice(invoice);
-            //TODO: Generar pdf y enviarlo por mail
-            //TODO: Ver si extraigo parte del método para que guarde la orden si no se llega a generar el pdf o no se llega a mandar el mail
+            Order order = orderService.registerPayment(paymentId, preferenceId);
+            orderService.generatePdfAndSendMail(order, true);
+            return redirect(order.getId());
         } catch (Exception e) {
             return new RedirectView("http://localhost:5173/error/" + e.getMessage());
         }
-        return redirect();
     }
 
-    private RedirectView redirect() {
-        String redirectUrl = "http://localhost:5173/pedido";
+    private RedirectView redirect(UUID id) {
+        String redirectUrl = "http://localhost:5173/user/pedidos/" + id;
         return new RedirectView(redirectUrl);
     }
 }

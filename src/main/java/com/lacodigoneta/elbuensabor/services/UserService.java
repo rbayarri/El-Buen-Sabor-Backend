@@ -15,7 +15,6 @@ import com.lacodigoneta.elbuensabor.exceptions.InvalidCredentialsException;
 import com.lacodigoneta.elbuensabor.exceptions.NoLoggedUserException;
 import com.lacodigoneta.elbuensabor.mappers.UserMapper;
 import com.lacodigoneta.elbuensabor.repositories.UserRepository;
-import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -197,15 +196,11 @@ public class UserService extends BaseServiceImpl<User, UserRepository> {
         ForgetPasswordToken token = new ForgetPasswordToken(user, LocalDateTime.now().plusDays(1));
         ForgetPasswordToken savedToken = forgetPasswordTokenService.save(token);
 
-        try {
-            mailService.sendHtml("lacodigoneta@gmail.com", user.getUsername(), "¡Bienvenido!",
-                    "<p>Haga click en el siguiente enlace para restablecer su contraseña</p>" +
-                            "<a href='http://localhost:5173/resetPassword/" + user.getId() + "/" + savedToken.getId() + "'>" +
-                            "http://localhost:5173/resetPassword/" + user.getId() + "/" + savedToken.getId() + "</a>"
-            );
-        } catch (MessagingException ex) {
-            throw new RuntimeException(ex.getMessage());
-        }
+        mailService.sendHtml("lacodigoneta@gmail.com", user.getUsername(), "¡Bienvenido!",
+                "<p>Haga click en el siguiente enlace para restablecer su contraseña</p>" +
+                        "<a href='http://localhost:5173/resetPassword/" + user.getId() + "/" + savedToken.getId() + "'>" +
+                        "http://localhost:5173/resetPassword/" + user.getId() + "/" + savedToken.getId() + "</a>"
+        );
 
     }
 

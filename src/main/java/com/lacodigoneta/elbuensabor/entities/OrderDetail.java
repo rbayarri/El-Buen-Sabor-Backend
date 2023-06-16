@@ -3,7 +3,6 @@ package com.lacodigoneta.elbuensabor.entities;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -27,7 +26,6 @@ public class OrderDetail extends BaseEntity {
 
     private BigDecimal unitPrice;
 
-    @Transient
     private BigDecimal unitCost;
 
     private BigDecimal discount;

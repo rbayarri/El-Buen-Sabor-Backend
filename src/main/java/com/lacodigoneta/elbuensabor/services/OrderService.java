@@ -10,7 +10,9 @@ import com.lacodigoneta.elbuensabor.exceptions.NotAllowedOperationException;
 import com.lacodigoneta.elbuensabor.exceptions.PermissionsException;
 import com.lacodigoneta.elbuensabor.exceptions.PhoneNumberException;
 import com.lacodigoneta.elbuensabor.repositories.OrderRepository;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -34,49 +36,62 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
 
     private final InvoiceService invoiceService;
 
-    public OrderService(OrderRepository repository, UserService userService, ProductService productService, AddressService addressService, PhoneNumberService phoneNumberService, InvoiceService invoiceService) {
+    private final JavaMailService mailService;
+
+    public OrderService(OrderRepository repository, UserService userService, ProductService productService, AddressService addressService, PhoneNumberService phoneNumberService, InvoiceService invoiceService, JavaMailService mailService) {
         super(repository);
         this.userService = userService;
         this.productService = productService;
         this.addressService = addressService;
         this.phoneNumberService = phoneNumberService;
         this.invoiceService = invoiceService;
+        this.mailService = mailService;
     }
 
     public Page<Order> findAllByStatus(Status status, Pageable pageable) {
-        return repository.findAllByStatusOrderByDateTimeAsc(status, pageable);
+        return repository.findAllByStatusOrderByDateTimeAsc(status, pageable).map(this::completeEntity);
     }
 
     public List<Order> findAllByStatus(Status status) {
-        return repository.findAllByStatusOrderByDateTimeAsc(status);
+        return repository.findAllByStatusOrderByDateTimeAsc(status).stream().map(this::completeEntity).toList();
     }
 
     public Page<Order> findAllByUserId(UUID id, Pageable pageable) {
         User byId = userService.findById(id);
-        return repository.findAllByUserOrderByDateTimeAsc(byId, pageable);
+        return repository.findAllByUserOrderByDateTimeAsc(byId, pageable).map(this::completeEntity);
     }
 
     public List<Order> findAllByUserId(UUID id) {
         User byId = userService.findById(id);
-        return repository.findAllByUserOrderByDateTimeAsc(byId);
+        return repository.findAllByUserOrderByDateTimeAsc(byId).stream().map(this::completeEntity).toList();
     }
 
     public Page<Order> findMyOrders(Pageable pageable) {
         User user = userService.getLoggedUser();
-        return repository.findAllByUserOrderByDateTimeAsc(user, pageable);
+        return repository.findAllByUserOrderByDateTimeAsc(user, pageable).map(this::completeEntity);
     }
 
     public List<Order> findMyOrders() {
         User user = userService.getLoggedUser();
-        return repository.findAllByUserOrderByDateTimeAsc(user);
+        return repository.findAllByUserOrderByDateTimeAsc(user).stream().map(this::completeEntity).toList();
+    }
+
+    public Order findOrderById(UUID id) {
+        User user = userService.getLoggedUser();
+        Order order = findById(id);
+        if (!order.getUser().equals(user)) {
+            throw new PermissionsException();
+        }
+        return order;
     }
 
     public Page<Order> findAllForCashier(Pageable pageable) {
-        return repository.findAllByDateTimeBetweenOrderByDateTimeDesc(LocalDateTime.now().minusHours(6), LocalDateTime.now(), pageable);
+        return repository.findAllByDateTimeBetweenOrderByDateTimeDesc(LocalDateTime.now().minusHours(6), LocalDateTime.now(), pageable).map(this::completeEntity);
     }
 
     public List<Order> findAllForCashier() {
-        return repository.findAllByDateTimeBetweenOrderByDateTimeDesc(LocalDateTime.now().minusHours(6), LocalDateTime.now());
+        List<Order> orders = repository.findAllByDateTimeBetweenOrderByDateTimeDesc(LocalDateTime.now().minusHours(6), LocalDateTime.now());
+        return orders.stream().filter(o -> !(o.getPaymentMethod().equals(PaymentMethod.MERCADO_PAGO) && !o.isPaid())).map(this::completeEntity).toList();
     }
 
     public Order findByPreferenceId(String preferenceId) {
@@ -120,6 +135,12 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
             }
         }
 
+        if (entity.getDeliveryMethod().equals(DeliveryMethod.HOME_DELIVERY)) {
+            if (Objects.isNull(entity.getAddress()) || Objects.isNull(entity.getPhoneNumber())) {
+                throw new NotAllowedOperationException("Para envíos a domicilio debe indicar información de contacto");
+            }
+        }
+
         entity.setStatus(Status.PENDING);
         entity.setPaid(false);
 
@@ -153,12 +174,15 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
         for (OrderDetail orderDetail : entity.getOrderDetails()) {
             orderDetail.setDiscount(BigDecimal.ZERO);
             orderDetail.setUnitPrice(orderDetail.getProduct().getPrice());
+            orderDetail.setUnitCost(orderDetail.getProduct().getPrice().divide(orderDetail.getProduct().getProfitMargin().add(BigDecimal.ONE)));
         }
     }
 
     @Override
     public Order completeEntity(Order order) {
-        addCookingTime(order);
+        if (!order.getStatus().equals(Status.CANCELLED) && !order.getStatus().equals(Status.DELIVERED)) {
+            addCookingTime(order);
+        }
         addDiscount(order);
         return order;
     }
@@ -199,6 +223,8 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
 
             int chefs = userService.countUsersByRoleAndActiveTrue(Role.CHEF);
             order.setTotalTime((orderCookingTime + previousOrdersCookingTime) / chefs + order.getDeliveryTime());
+        } else {
+            order.setTotalTime(order.getDeliveryTime());
         }
     }
 
@@ -263,7 +289,23 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
         order.setPaid(true);
         Invoice invoice = invoiceService.createInvoice(order);
         order.setInvoice(invoice);
-        //TODO: Generar pdf y mandar por mail
+        return order;
+    }
+
+    @Transactional(rollbackOn = Exception.class)
+    public Order registerPayment(Long paymentId, String preferenceId) {
+
+        Order order = findByPreferenceId(preferenceId);
+        if (Objects.isNull(order)) {
+            throw new RuntimeException("No existe orden");
+        }
+        if (order.isPaid() || Objects.nonNull(order.getPaymentId())) {
+            throw new RuntimeException("Orden ya pagada");
+        }
+        order.setPaymentId(String.valueOf(paymentId));
+        order.setPaid(true);
+        Invoice invoice = invoiceService.createInvoice(order);
+        order.setInvoice(invoice);
         return order;
     }
 
@@ -277,11 +319,36 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
 
         if (order.isPaid()) {
             invoiceService.cancel(order);
-            //generarPdfYMail(order.getInvoice().getCreditNote())
-            // TODO: Hacer nota de crédito y mandar por mail
         }
 
         order.setStatus(Status.CANCELLED);
         return order;
+    }
+
+    public void getInvoicePdf(UUID id, HttpServletResponse response) {
+        Order order = findById(id);
+        String headerkey = "Content-Disposition";
+        String headervalue = "attachment; filename=Factura" + ".pdf";
+        response.setHeader(headerkey, headervalue);
+        PdfGenerator.generateResponse(response, order, true);
+    }
+
+    public void getCreditNotePdf(UUID id, HttpServletResponse response) {
+        Order order = findById(id);
+        String headerkey = "Content-Disposition";
+        String headervalue = "attachment; filename=Nota_de_Credito" + ".pdf";
+        response.setHeader(headerkey, headervalue);
+        PdfGenerator.generateResponse(response, order, false);
+    }
+
+    public void generatePdfAndSendMail(Order order, boolean invoice) {
+        ByteArrayResource pdf = PdfGenerator.generate(order, invoice);
+        String target = invoice ? "Factura" : "Nota de crédito";
+        mailService.sendWithAttach("lacodigoneta@gmail.com",
+                order.getUser().getUsername(),
+                target,
+                "Adjuntamos tu " + target.toLowerCase() + " como archivo adjunto",
+                target.replace(" ", "_").replace("é", "e") + ".pdf",
+                pdf);
     }
 }

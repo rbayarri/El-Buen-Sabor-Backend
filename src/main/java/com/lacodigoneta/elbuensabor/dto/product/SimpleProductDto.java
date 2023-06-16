@@ -1,5 +1,6 @@
 package com.lacodigoneta.elbuensabor.dto.product;
 
+import com.lacodigoneta.elbuensabor.dto.ImageDto;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,4 +21,6 @@ public class SimpleProductDto {
     private UUID id;
 
     private String name;
+
+    private ImageDto image;
 }

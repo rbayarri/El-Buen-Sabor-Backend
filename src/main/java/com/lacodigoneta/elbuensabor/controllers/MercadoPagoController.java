@@ -19,7 +19,7 @@ public class MercadoPagoController {
 
     private MercadoPagoService service;
 
-    @GetMapping("/createPreference/{id}")
+    @PostMapping("/createPreference/{id}")
     @PreAuthorize("hasRole('ROLE_USER')")
     public Preference createPreference(@PathVariable UUID id) throws MPException, MPApiException {
         return service.createPreference(id);

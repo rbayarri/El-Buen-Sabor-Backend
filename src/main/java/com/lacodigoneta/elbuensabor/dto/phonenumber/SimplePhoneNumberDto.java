@@ -16,4 +16,8 @@ public class SimplePhoneNumberDto {
 
     @NotNull(message = NOT_NULL_VALIDATION_MESSAGE)
     private UUID id;
+
+    private String areaCode;
+
+    private String phoneNumber;
 }

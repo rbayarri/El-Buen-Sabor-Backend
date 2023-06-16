@@ -57,7 +57,7 @@ public class ProductController {
     @GetMapping(value = "/active/category/{id}")
     public ResponseEntity<List<ClientProductDto>> findAllActiveProductsByActiveCategories(@PathVariable UUID id) {
         Category category = categoryService.findById(id);
-        List<Product> activeProductsByCategoryRoot = categoryService.findActiveProductsByCategoryRoot(category);
+        List<Product> activeProductsByCategoryRoot = service.findActiveProductsByCategoryRoot(category);
         return ResponseEntity.ok(activeProductsByCategoryRoot.stream().map(mapper::toClientProductDto).toList());
     }
 

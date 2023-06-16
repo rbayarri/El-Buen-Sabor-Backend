@@ -44,4 +44,6 @@ public class User extends BaseEntity {
 
     private boolean active;
 
+    private boolean firstTimeAccess;
+
 }

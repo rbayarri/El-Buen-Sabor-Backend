@@ -25,29 +25,35 @@ public class JavaMailService {
     }
 
     public void sendHtml(String from, String to, String subject,
-                         String text) throws MessagingException {
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true);
-        helper.setFrom(from);
-        helper.setTo(to);
-        helper.setSubject(subject);
-        helper.setText(text, true);
-        mailSender.send(message);
+                         String text) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            helper.setFrom(from);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(text, true);
+            mailSender.send(message);
+        } catch (MessagingException e) {
+            throw new RuntimeException("Error al enviar mail");
+        }
     }
 
     public void sendWithAttach(String from, String to, String subject,
                                String text, String attachName,
-                               InputStreamSource inputStream) throws MessagingException {
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true);
-        helper.setFrom(from);
-        helper.setTo(to);
-        helper.setSubject(subject);
-        helper.setText(text, true);
-        // También puede aceptar ByteArrayResource, implementación de InputStreamSource
-        // ByteArrayResource bar = new ByteArrayResource();
-        helper.addAttachment(attachName, inputStream);
-        mailSender.send(message);
+                               InputStreamSource inputStream) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            helper.setFrom(from);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(text, true);
+            helper.addAttachment(attachName, inputStream);
+            mailSender.send(message);
+        } catch (MessagingException e) {
+            throw new RuntimeException("Error al enviar mail");
+        }
     }
 }
 

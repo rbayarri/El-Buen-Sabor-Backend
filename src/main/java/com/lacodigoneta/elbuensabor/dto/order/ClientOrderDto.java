@@ -57,5 +57,5 @@ public class ClientOrderDto {
     private List<ClientOrderDetailDto> orderDetails;
 
     @Null(message = NULL_VALIDATION_MESSAGE)
-    private Integer cookingTime;
+    private Integer totalTime;
 }

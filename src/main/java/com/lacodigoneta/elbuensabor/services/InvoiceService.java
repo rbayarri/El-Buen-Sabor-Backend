@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class InvoiceService extends BaseServiceImpl<Invoice, InvoiceRepository> {
 
-    private CreditNoteService creditNoteService;
+    private final CreditNoteService creditNoteService;
 
     public InvoiceService(InvoiceRepository repository, CreditNoteService creditNoteService) {
         super(repository);
@@ -29,6 +29,7 @@ public class InvoiceService extends BaseServiceImpl<Invoice, InvoiceRepository> 
     public Invoice createInvoice(Order order) {
         Invoice invoice = new Invoice();
         invoice.setOrder(order);
+        invoice.setNumber(getNextNumber());
         return save(invoice);
     }
 
@@ -37,7 +38,10 @@ public class InvoiceService extends BaseServiceImpl<Invoice, InvoiceRepository> 
         Invoice invoice = order.getInvoice();
         CreditNote creditNote = creditNoteService.createCreditNote(invoice);
         invoice.setCreditNote(creditNote);
-        //TODO: Generar pdf y enviar por mail
         return invoice;
+    }
+
+    private Integer getNextNumber() {
+        return findAll().stream().mapToInt(Invoice::getNumber).max().orElse(0) + 1;
     }
 }

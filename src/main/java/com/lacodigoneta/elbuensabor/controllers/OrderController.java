@@ -6,7 +6,6 @@ import com.lacodigoneta.elbuensabor.entities.Order;
 import com.lacodigoneta.elbuensabor.enums.Status;
 import com.lacodigoneta.elbuensabor.mappers.OrderMapper;
 import com.lacodigoneta.elbuensabor.services.OrderService;
-import com.lacodigoneta.elbuensabor.services.PdfGenerator;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -18,10 +17,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,8 +28,6 @@ public class OrderController {
     private final OrderService service;
 
     private final OrderMapper mapper;
-
-    //TODO: Pago
 
     @GetMapping(value = "/admin", params = "pageable")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -65,15 +58,23 @@ public class OrderController {
     }
 
     @GetMapping(value = "", params = "pageable")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<Page<ClientOrderDto>> getMyOrders(Pageable pageable) {
         Page<Order> myOrders = service.findMyOrders(pageable);
         return ResponseEntity.ok(myOrders.map(mapper::toClientOrderDto));
     }
 
     @GetMapping("")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<List<ClientOrderDto>> getMyOrders() {
         List<Order> myOrders = service.findMyOrders();
         return ResponseEntity.ok(myOrders.stream().map(mapper::toClientOrderDto).toList());
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<ClientOrderDto> getMyOrder(@PathVariable UUID id) {
+        return ResponseEntity.ok(mapper.toClientOrderDto(service.findOrderById(id)));
     }
 
     @PostMapping("")
@@ -170,6 +171,7 @@ public class OrderController {
     @PreAuthorize("hasRole('ROLE_CASHIER')")
     public ResponseEntity<OrderDto> markAsPaid(@PathVariable UUID id) {
         Order order = service.pay(id);
+        service.generatePdfAndSendMail(order, true);
         OrderDto orderDto = mapper.toOrderDto(order);
         return ResponseEntity.ok(orderDto);
     }
@@ -178,19 +180,20 @@ public class OrderController {
     @PreAuthorize("hasAnyRole('ROLE_CASHIER', 'ROLE_USER')")
     public ResponseEntity<OrderDto> cancel(@PathVariable UUID id) {
         Order order = service.cancel(id);
+        if (order.isPaid()) {
+            service.generatePdfAndSendMail(order, false);
+        }
         OrderDto orderDto = mapper.toOrderDto(order);
         return ResponseEntity.ok(orderDto);
     }
 
     @GetMapping(value = "/viewInvoice/{id}", produces = {MediaType.APPLICATION_PDF_VALUE})
-    public void getPdf(@PathVariable UUID id, HttpServletResponse response) throws IOException {
-//        response.setContentType("application/pdf");
-        DateFormat dateFormat = new SimpleDateFormat("YYYY-MM-DD:HH:MM:SS");
-        String currentDateTime = dateFormat.format(new Date());
-        String headerkey = "Content-Disposition";
-        String headervalue = "attachment; filename=Factura " + currentDateTime + ".pdf";
-        response.setHeader(headerkey, headervalue);
-        PdfGenerator.generateResponse(response);
+    public void getPdf(@PathVariable UUID id, HttpServletResponse response) {
+        service.getInvoicePdf(id, response);
     }
 
+    @GetMapping(value = "/viewCreditNote/{id}", produces = {MediaType.APPLICATION_PDF_VALUE})
+    public void getPdfCreditNote(@PathVariable UUID id, HttpServletResponse response) {
+        service.getCreditNotePdf(id, response);
+    }
 }

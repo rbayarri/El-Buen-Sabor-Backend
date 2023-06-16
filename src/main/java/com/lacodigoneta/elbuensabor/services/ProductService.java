@@ -156,20 +156,32 @@ public class ProductService extends BaseServiceImpl<Product, ProductRepository> 
             productDetailService.completeIngredient(pd.getIngredient());
         });
 
-        final BigDecimal[] price = {BigDecimal.ZERO};
-        product.getProductDetails().forEach(pd -> {
-            price[0] = price[0].add(pd.getIngredient().getLastCost().multiply(pd.getQuantity()));
-        });
+//        final BigDecimal[] price = {BigDecimal.ZERO};
+//        product.getProductDetails().forEach(pd -> {
+//            price[0] = price[0].add(pd.getIngredient().getLastCost().multiply(pd.getQuantity()));
+//        });
+//
+//        product.setPrice(price[0].multiply(product.getProfitMargin().add(BigDecimal.ONE)));
 
-        product.setPrice(price[0].multiply(product.getProfitMargin()));
+        BigDecimal price = BigDecimal.ZERO;
+        price = product.getProductDetails().stream()
+                .map(pd -> pd.getIngredient().getLastCost().multiply(pd.getQuantity()))
+                .reduce(price, BigDecimal::add);
+
+        product.setPrice(price.multiply(product.getProfitMargin().add(BigDecimal.ONE)));
     }
 
     private void addStock(Product product) {
 
         int stock = product.getProductDetails().stream()
-                .mapToInt(pd -> pd.getIngredient().getCurrentStock().divide(pd.getQuantity()).intValue())
+                .mapToInt(pd -> {
+                    if (pd.getIngredient().getCurrentStock().equals(BigDecimal.ZERO)) {
+                        return 0;
+                    } else {
+                        return pd.getIngredient().getCurrentStock().divide(pd.getQuantity()).intValue();
+                    }
+                })
                 .min().getAsInt();
-
         product.setStock(stock);
     }
 
@@ -228,5 +240,11 @@ public class ProductService extends BaseServiceImpl<Product, ProductRepository> 
         ImageService imageService = imageServiceFactory.getObject(hasFile);
         Image saved = imageService.save(image);
         byId.setImage(saved);
+    }
+
+    public List<Product> findActiveProductsByCategoryRoot(Category category) {
+        return categoryService.findActiveProductsByCategoryRoot(category).stream()
+                .map(this::completeEntity)
+                .toList();
     }
 }

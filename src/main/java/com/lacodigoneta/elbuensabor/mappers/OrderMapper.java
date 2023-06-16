@@ -4,7 +4,6 @@ import com.lacodigoneta.elbuensabor.dto.order.ClientOrderDto;
 import com.lacodigoneta.elbuensabor.dto.order.OrderDto;
 import com.lacodigoneta.elbuensabor.dto.orderdetails.ClientOrderDetailDto;
 import com.lacodigoneta.elbuensabor.dto.orderdetails.OrderDetailDto;
-import com.lacodigoneta.elbuensabor.dto.product.SimpleProductDto;
 import com.lacodigoneta.elbuensabor.entities.Order;
 import com.lacodigoneta.elbuensabor.entities.OrderDetail;
 import lombok.AllArgsConstructor;
@@ -29,6 +28,7 @@ public class OrderMapper {
 
     private PhoneNumberMapper phoneNumberMapper;
 
+    private ProductMapper productMapper;
 
     public Order toEntity(ClientOrderDto clientOrderDto) {
         Order order = mapper.map(clientOrderDto, Order.class);
@@ -60,7 +60,7 @@ public class OrderMapper {
 
     private ClientOrderDetailDto toClientOrderDetailDto(OrderDetail orderDetail) {
         ClientOrderDetailDto clientOrderDetailDto = mapper.map(orderDetail, ClientOrderDetailDto.class);
-        clientOrderDetailDto.setProduct(mapper.map(orderDetail.getProduct(), SimpleProductDto.class));
+        clientOrderDetailDto.setProduct(productMapper.toSimpleProductDto(orderDetail.getProduct()));
         return clientOrderDetailDto;
     }
 

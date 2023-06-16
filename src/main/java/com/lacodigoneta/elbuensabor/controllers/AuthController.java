@@ -10,7 +10,6 @@ import com.lacodigoneta.elbuensabor.services.JavaMailService;
 import com.lacodigoneta.elbuensabor.services.JwtService;
 import com.lacodigoneta.elbuensabor.services.UserService;
 import com.lacodigoneta.elbuensabor.services.VerifyEmailTokenService;
-import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -49,16 +48,14 @@ public class AuthController {
         User saved = service.save(mapper.toEntity(registrationRequest));
         VerifyEmailToken token = new VerifyEmailToken(saved, LocalDateTime.now().plusDays(1));
         VerifyEmailToken savedToken = verifyEmailTokenService.save(token);
-        try {
-            mailService.sendHtml("lacodigoneta@gmail.com", saved.getUsername(), "¡Bienvenido!",
-                    "<p>Gracias por registrarte en nuestro sitio web</p>" +
-                            "<p>Por favor haga click en el siguiente enlace para verificar su email</p>" +
-                            "<a href='http://localhost:5173/verifyEmail/" + saved.getId() + "/" + savedToken.getId() + "'>" +
-                            "http://localhost:5173/verifyEmail/" + saved.getId() + "/" + savedToken.getId() + "</a>"
-            );
-        } catch (MessagingException ex) {
-            throw new RuntimeException(ex.getMessage());
-        }
+
+        mailService.sendHtml("lacodigoneta@gmail.com", saved.getUsername(), "¡Bienvenido!",
+                "<p>Gracias por registrarte en nuestro sitio web</p>" +
+                        "<p>Por favor haga click en el siguiente enlace para verificar su email</p>" +
+                        "<a href='http://localhost:5173/verifyEmail/" + saved.getId() + "/" + savedToken.getId() + "'>" +
+                        "http://localhost:5173/verifyEmail/" + saved.getId() + "/" + savedToken.getId() + "</a>"
+        );
+
         return ResponseEntity.ok(new AuthenticationResponse(jwtService.createToken(saved, false)));
     }
 

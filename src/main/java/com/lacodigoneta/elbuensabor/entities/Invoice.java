@@ -1,6 +1,8 @@
 package com.lacodigoneta.elbuensabor.entities;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,7 +16,6 @@ import lombok.Setter;
 @Table(name = "invoices")
 public class Invoice extends BaseEntity {
 
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Integer number;
 
     @OneToOne

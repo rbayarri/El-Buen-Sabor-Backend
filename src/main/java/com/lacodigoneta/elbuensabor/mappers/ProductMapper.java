@@ -89,4 +89,10 @@ public class ProductMapper {
     public Product toEntity(SimpleProductDto simpleProductDto) {
         return mapper.map(simpleProductDto, Product.class);
     }
+
+    public SimpleProductDto toSimpleProductDto(Product product) {
+        SimpleProductDto map = mapper.map(product, SimpleProductDto.class);
+        map.setImage(imageMapper.toImageDto(product.getImage()));
+        return map;
+    }
 }
