@@ -50,6 +50,7 @@ public class JwtService {
         extraClaims.put("name", user.getName());
         extraClaims.put("lastName", user.getLastName());
         extraClaims.put("role", user.getRole());
+        extraClaims.put("firstTimeAccess", user.isFirstTimeAccess());
 
         return Jwts.builder()
                 .setClaims(extraClaims)
@@ -112,7 +113,7 @@ public class JwtService {
 
         // Get profile information from payload
         String email = payload.getEmail();
-        boolean emailVerified = Boolean.valueOf(payload.getEmailVerified());
+        boolean emailVerified = payload.getEmailVerified();
         String pictureUrl = (String) payload.get("picture");
         String familyName = (String) payload.get("family_name");
         String givenName = (String) payload.get("given_name");

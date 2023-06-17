@@ -1,8 +1,11 @@
 package com.lacodigoneta.elbuensabor.controllers;
 
+import com.lacodigoneta.elbuensabor.dto.auth.AuthenticationResponse;
+import com.lacodigoneta.elbuensabor.dto.auth.RegistrationRequest;
 import com.lacodigoneta.elbuensabor.dto.user.NewPassword;
 import com.lacodigoneta.elbuensabor.dto.user.ProfileUserDto;
 import com.lacodigoneta.elbuensabor.dto.user.UpdateUser;
+import com.lacodigoneta.elbuensabor.dto.user.UserByAdminDto;
 import com.lacodigoneta.elbuensabor.entities.User;
 import com.lacodigoneta.elbuensabor.mappers.UserMapper;
 import com.lacodigoneta.elbuensabor.services.UserService;
@@ -16,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -27,23 +31,46 @@ public class UserController {
 
     private final UserMapper mapper;
 
+    @GetMapping(value = "", params = "pageable")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<Page<UserByAdminDto>> findAll(Pageable pageable) {
+        Page<User> allPaged = service.findAllPaged(pageable);
+        return ResponseEntity.ok(allPaged.map(mapper::toUserByAdminDto));
+    }
+
     @GetMapping("")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<Page<User>> findAll(Pageable pageable) {
-        Page<User> allPaged = service.findAllPaged(pageable);
-        return ResponseEntity.ok(allPaged);
+    public ResponseEntity<List<UserByAdminDto>> findAll() {
+        List<User> users = service.findAll();
+        return ResponseEntity.ok(users.stream().map(mapper::toUserByAdminDto).toList());
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<User> findAll(@PathVariable UUID id) {
-        return ResponseEntity.ok(service.findById(id));
+    public ResponseEntity<UserByAdminDto> findById(@PathVariable UUID id) {
+        return ResponseEntity.ok(mapper.toUserByAdminDto(service.findById(id)));
     }
 
     @GetMapping("/profile")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER', 'ROLE_CASHIER', 'ROLE_CHEF', 'ROLE_DELIVERY')")
     public ResponseEntity<ProfileUserDto> getProfile() {
         return ResponseEntity.ok(service.getProfileInformation());
+    }
+
+    @PostMapping("")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<UserByAdminDto> save(@RequestBody @Valid RegistrationRequest request) {
+
+        User saved = service.save(mapper.toEntity(request));
+        return ResponseEntity.ok(mapper.toUserByAdminDto(saved));
+    }
+
+    @PutMapping(value = "/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    public ResponseEntity<UserByAdminDto> update(@PathVariable UUID id,
+                                                 @RequestBody @Valid UpdateUser updateUser) {
+        User user = service.update(id, mapper.toEntity(updateUser));
+        return ResponseEntity.ok(mapper.toUserByAdminDto(user));
     }
 
     @PutMapping(value = "", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
@@ -68,7 +95,7 @@ public class UserController {
 
     @PutMapping("/password")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER', 'ROLE_CASHIER', 'ROLE_CHEF', 'ROLE_DELIVERY')")
-    public ResponseEntity<String> updatePassword(@RequestBody @Valid NewPassword newPassword) {
+    public ResponseEntity<AuthenticationResponse> updatePassword(@RequestBody @Valid NewPassword newPassword) {
         return ResponseEntity.ok(service.updatePassword(newPassword));
     }
 

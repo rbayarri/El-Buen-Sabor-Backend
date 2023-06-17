@@ -25,5 +25,7 @@ public class UpdateUser {
 
     private boolean active;
 
+    private String username;
+
 
 }

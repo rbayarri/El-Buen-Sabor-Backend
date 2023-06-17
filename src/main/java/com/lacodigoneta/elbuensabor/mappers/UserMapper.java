@@ -3,9 +3,7 @@ package com.lacodigoneta.elbuensabor.mappers;
 import com.lacodigoneta.elbuensabor.dto.address.AddressDto;
 import com.lacodigoneta.elbuensabor.dto.auth.RegistrationRequest;
 import com.lacodigoneta.elbuensabor.dto.phonenumber.PhoneNumberDto;
-import com.lacodigoneta.elbuensabor.dto.user.CreatedUser;
-import com.lacodigoneta.elbuensabor.dto.user.ProfileUserDto;
-import com.lacodigoneta.elbuensabor.dto.user.UserDto;
+import com.lacodigoneta.elbuensabor.dto.user.*;
 import com.lacodigoneta.elbuensabor.entities.User;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -39,6 +37,10 @@ public class UserMapper {
         return mapper.map(registrationRequest, User.class);
     }
 
+    public User toEntity(UpdateUser updateUser) {
+        return mapper.map(updateUser, User.class);
+    }
+
     public CreatedUser toCreatedUser(User user) {
         return mapper.map(user, CreatedUser.class);
     }
@@ -50,10 +52,35 @@ public class UserMapper {
             profileUserDto.setImage(imageMapper.toImageDto(user.getImage()));
         }
 
-        Set<AddressDto> addressDtoSet = user.getAddresses().stream().map(addressMapper::toAddressDto).collect(Collectors.toSet());
-        Set<PhoneNumberDto> phoneNumberDtoSet = user.getPhoneNumbers().stream().map(phoneNumberMapper::toPhoneNumberDto).collect(Collectors.toSet());
-        profileUserDto.setAddresses(addressDtoSet);
-        profileUserDto.setPhoneNumbers(phoneNumberDtoSet);
+        if (Objects.nonNull(user.getAddresses())) {
+            Set<AddressDto> addressDtoSet = user.getAddresses().stream().map(addressMapper::toAddressDto).collect(Collectors.toSet());
+            profileUserDto.setAddresses(addressDtoSet);
+        }
+        if (Objects.nonNull(user.getPhoneNumbers())) {
+            Set<PhoneNumberDto> phoneNumberDtoSet = user.getPhoneNumbers().stream().map(phoneNumberMapper::toPhoneNumberDto).collect(Collectors.toSet());
+            profileUserDto.setPhoneNumbers(phoneNumberDtoSet);
+        }
         return profileUserDto;
+    }
+
+    public UserByAdminDto toUserByAdminDto(User user) {
+
+        UserByAdminDto userByAdminDto = mapper.map(user, UserByAdminDto.class);
+
+        if (Objects.nonNull(user.getImage())) {
+            userByAdminDto.setImage(imageMapper.toImageDto(user.getImage()));
+        }
+
+        if (Objects.nonNull(user.getAddresses())) {
+            Set<AddressDto> addressDtoSet = user.getAddresses().stream().map(addressMapper::toAddressDto).collect(Collectors.toSet());
+            userByAdminDto.setAddresses(addressDtoSet);
+        }
+        if (Objects.nonNull(user.getPhoneNumbers())) {
+            Set<PhoneNumberDto> phoneNumberDtoSet = user.getPhoneNumbers().stream().map(phoneNumberMapper::toPhoneNumberDto).collect(Collectors.toSet());
+            userByAdminDto.setPhoneNumbers(phoneNumberDtoSet);
+        }
+
+        return userByAdminDto;
+
     }
 }

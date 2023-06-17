@@ -119,7 +119,12 @@ public class UserService extends BaseServiceImpl<User, UserRepository> {
 
     @Override
     public User changeStates(User source, User destination) {
-        return null;
+        destination.setName(source.getName());
+        destination.setLastName(source.getLastName());
+        destination.setUsername(source.getUsername());
+        destination.setActive(source.isActive());
+        destination.setRole(source.getRole());
+        return destination;
     }
 
     @Override
@@ -134,6 +139,7 @@ public class UserService extends BaseServiceImpl<User, UserRepository> {
             entity.setRole(Role.USER);
         }
         saveImage(false, "https://objetivoligar.com/wp-content/uploads/2017/03/blank-profile-picture-973460_1280.jpg", entity);
+        entity.setFirstTimeAccess(true);
     }
 
     public ProfileUserDto getProfileInformation() {
@@ -165,10 +171,16 @@ public class UserService extends BaseServiceImpl<User, UserRepository> {
     }
 
     @Transactional
-    public String updatePassword(NewPassword newPassword) {
+    public AuthenticationResponse updatePassword(NewPassword newPassword) {
         User user = getLoggedUser();
         user.setPassword(passwordEncoder.encode(newPassword.getNewPassword()));
-        return "Contraseña cambiada con éxito";
+        user.setFirstTimeAccess(false);
+
+        String token = jwtService.createToken(user, false);
+
+        return AuthenticationResponse.builder()
+                .token(token)
+                .build();
     }
 
     @Transactional
