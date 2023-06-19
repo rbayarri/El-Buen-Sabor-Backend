@@ -72,7 +72,7 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_USER','ROLE_ADMIN','ROLE_CASHIER','ROLE_CHEF','ROLE_DELIVERY')")
     public ResponseEntity<ClientOrderDto> getMyOrder(@PathVariable UUID id) {
         return ResponseEntity.ok(mapper.toClientOrderDto(service.findOrderById(id)));
     }

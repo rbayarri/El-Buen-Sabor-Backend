@@ -16,4 +16,6 @@ public class ProfitReport {
     private BigDecimal profits;
 
     private BigDecimal costs;
+
+    private BigDecimal holdingResults;
 }

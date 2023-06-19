@@ -79,7 +79,7 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
     public Order findOrderById(UUID id) {
         User user = userService.getLoggedUser();
         Order order = findById(id);
-        if (!order.getUser().equals(user)) {
+        if (!order.getUser().equals(user) && user.getRole().equals(Role.USER)) {
             throw new PermissionsException();
         }
         return order;

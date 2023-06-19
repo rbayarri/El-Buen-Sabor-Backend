@@ -32,6 +32,12 @@ public class PhoneNumberController {
         return ResponseEntity.ok(service.findAllActiveByUser().stream().map(mapper::toPhoneNumberDto).toList());
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<PhoneNumberDto> findByIdByUser(@PathVariable UUID id) {
+        return ResponseEntity.ok(mapper.toPhoneNumberDto(service.findById(id)));
+    }
+
+
     @PostMapping("")
     public ResponseEntity<PhoneNumberDto> save(@RequestBody @Valid PhoneNumberDto phoneNumberDto) {
 

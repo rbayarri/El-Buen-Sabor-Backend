@@ -7,8 +7,11 @@ import com.lacodigoneta.elbuensabor.dto.user.ProfileUserDto;
 import com.lacodigoneta.elbuensabor.dto.user.UpdateUser;
 import com.lacodigoneta.elbuensabor.dto.user.UserByAdminDto;
 import com.lacodigoneta.elbuensabor.entities.User;
+import com.lacodigoneta.elbuensabor.entities.VerifyEmailToken;
 import com.lacodigoneta.elbuensabor.mappers.UserMapper;
+import com.lacodigoneta.elbuensabor.services.JavaMailService;
 import com.lacodigoneta.elbuensabor.services.UserService;
+import com.lacodigoneta.elbuensabor.services.VerifyEmailTokenService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,6 +22,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,6 +34,10 @@ public class UserController {
     private final UserService service;
 
     private final UserMapper mapper;
+
+    private final VerifyEmailTokenService verifyEmailTokenService;
+
+    private final JavaMailService mailService;
 
     @GetMapping(value = "", params = "pageable")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -99,4 +107,18 @@ public class UserController {
         return ResponseEntity.ok(service.updatePassword(newPassword));
     }
 
+    @PostMapping("/verifyEmail")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER', 'ROLE_CASHIER', 'ROLE_CHEF', 'ROLE_DELIVERY')")
+    public ResponseEntity<?> sendEmailVerification() {
+        User user = service.getLoggedUser();
+        VerifyEmailToken token = new VerifyEmailToken(user, LocalDateTime.now().plusDays(1));
+        VerifyEmailToken savedToken = verifyEmailTokenService.save(token);
+
+        mailService.sendHtml("lacodigoneta@gmail.com", user.getUsername(), "Verificación de correo electrónico",
+                "<p>Por favor haga click en el siguiente enlace para verificar su email</p>" +
+                        "<a href='http://localhost:5173/verifyEmail/" + user.getId() + "/" + savedToken.getId() + "'>" +
+                        "http://localhost:5173/verifyEmail/" + user.getId() + "/" + savedToken.getId() + "</a>"
+        );
+        return ResponseEntity.ok("Email de verificación enviado");
+    }
 }
