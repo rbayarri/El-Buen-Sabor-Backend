@@ -43,8 +43,12 @@ dependencies {
     implementation('com.mercadopago:sdk-java:2.1.7') {
         exclude group: 'org.sonatype.sisu', module: 'sisu-guice'
     }
+
     implementation 'com.github.librepdf:openpdf:1.3.26'
-}
-tasks.named('test') {
-    useJUnitPlatform()
+    implementation 'org.apache.poi:poi-ooxml:5.2.2'
+    implementation 'org.apache.poi:poi'
+
+    tasks.named('test') {
+        useJUnitPlatform()
+    }
 }
