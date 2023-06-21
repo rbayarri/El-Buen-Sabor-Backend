@@ -53,8 +53,8 @@ public class ReportsService {
                         .cookingTime(p.getCookingTime())
                         .quantity(p.getOrderDetails().stream()
                                 .filter(o -> !o.getOrder().getStatus().equals(Status.CANCELLED))
-                                .filter(o -> o.getOrder().getDateTime().toLocalDate().isBefore(to))
-                                .filter(o -> o.getOrder().getDateTime().toLocalDate().isAfter(from))
+                                .filter(o -> o.getOrder().getDateTime().toLocalDate().isBefore(to.plusDays(1)))
+                                .filter(o -> o.getOrder().getDateTime().toLocalDate().isAfter(from.minusDays(1)))
                                 .filter(o -> o.getProduct().getCookingTime() > 0)
                                 .mapToInt(OrderDetail::getQuantity)
                                 .sum())
@@ -69,8 +69,8 @@ public class ReportsService {
                         .cookingTime(p.getCookingTime())
                         .quantity(p.getOrderDetails().stream()
                                 .filter(o -> !o.getOrder().getStatus().equals(Status.CANCELLED))
-                                .filter(o -> o.getOrder().getDateTime().toLocalDate().isBefore(to))
-                                .filter(o -> o.getOrder().getDateTime().toLocalDate().isAfter(from))
+                                .filter(o -> o.getOrder().getDateTime().toLocalDate().isBefore(to.plusDays(1)))
+                                .filter(o -> o.getOrder().getDateTime().toLocalDate().isAfter(from.minusDays(1)))
                                 .filter(o -> o.getProduct().getCookingTime() == 0)
                                 .mapToInt(OrderDetail::getQuantity)
                                 .sum())
@@ -105,7 +105,6 @@ public class ReportsService {
         headerStyle.setBorderBottom(BorderStyle.THIN);
         headerStyle.setBorderLeft(BorderStyle.THIN);
         headerStyle.setBorderRight(BorderStyle.THIN);
-        headerStyle.setBorderLeft(BorderStyle.THIN);
         headerStyle.setBorderTop(BorderStyle.THIN);
 
         XSSFFont font = ((XSSFWorkbook) workbook).createFont();
@@ -126,7 +125,7 @@ public class ReportsService {
         cellStyle.setAlignment(HorizontalAlignment.CENTER);
         cellStyle.setBorderLeft(BorderStyle.THIN);
         cellStyle.setBorderRight(BorderStyle.THIN);
-        cellStyle.setBorderLeft(BorderStyle.THIN);
+        cellStyle.setBorderBottom(BorderStyle.THIN);
         cellStyle.setBorderTop(BorderStyle.THIN);
 
         for (RankingProduct rp : rankingProducts) {

@@ -210,9 +210,9 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
 
         int orderCookingTime = order.getOrderDetails().stream()
                 .mapToInt(this::calculateCookingTimePerOrderDetail).sum();
-        orderCookingTime += order.getDelayedMinutes();
 
-        order.setCookingTime(orderCookingTime);
+        int chefs = userService.countUsersByRoleAndActiveTrue(Role.CHEF);
+        order.setCookingTime(orderCookingTime/chefs + order.getDelayedMinutes());
 
         if (order.getDeliveryMethod().equals(DeliveryMethod.HOME_DELIVERY)) {
             order.setDeliveryTime(10);
@@ -227,8 +227,7 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
                     .mapToInt(Order::getDelayedMinutes)
                     .sum();
 
-            int chefs = userService.countUsersByRoleAndActiveTrue(Role.CHEF);
-            order.setTotalTime((orderCookingTime + previousOrdersCookingTime) / chefs + order.getDeliveryTime());
+            order.setTotalTime(order.getCookingTime() + (previousOrdersCookingTime / chefs) + order.getDeliveryTime());
         } else {
             order.setTotalTime(order.getDeliveryTime());
         }
