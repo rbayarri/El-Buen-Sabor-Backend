@@ -9,5 +9,7 @@ import java.util.UUID;
 public interface ProductRepository extends JpaRepository<Product, UUID> {
     List<Product> findAllByActiveTrue();
 
+    List<Product> findAllByNameContainingIgnoreCaseAndActiveTrue(String name);
+
     List<Product> findAllByActiveTrueAndCategoryName(String categoryName);
 }

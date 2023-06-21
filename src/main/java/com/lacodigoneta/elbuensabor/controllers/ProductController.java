@@ -35,6 +35,7 @@ public class ProductController {
 
 
     @GetMapping("")
+    @PreAuthorize("hasAnyRole('ROLE_CHEF', 'ROLE_ADMIN')")
     public ResponseEntity<List<ProductDto>> findAll() {
         return ResponseEntity.ok(service.findAll().stream().map(mapper::toProductDto).collect(Collectors.toList()));
     }
@@ -45,6 +46,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_CHEF', 'ROLE_ADMIN')")
     public ResponseEntity<ProductDto> findById(@PathVariable UUID id) {
         return ResponseEntity.ok(mapper.toProductDto(service.findById(id)));
     }
@@ -52,6 +54,11 @@ public class ProductController {
     @GetMapping("/active")
     public ResponseEntity<List<ClientProductDto>> findAllActive() {
         return ResponseEntity.ok(service.findAllActive().stream().map(mapper::toClientProductDto).collect(Collectors.toList()));
+    }
+
+    @GetMapping(value = "/active", params = "name")
+    public ResponseEntity<List<ClientProductDto>> findAllActiveByName(@RequestParam String name) {
+        return ResponseEntity.ok(service.findAllActiveByName(name).stream().map(mapper::toClientProductDto).collect(Collectors.toList()));
     }
 
     @GetMapping(value = "/active/category/{id}")

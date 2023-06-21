@@ -76,7 +76,7 @@ public class MercadoPagoService {
                         .path("/api/v1/mercadoPago/success")
                         .build()
                         .toUri().toString())
-                .failure("http://localhost:5173/user/pedidos/" + orderId)
+                .failure("http://localhost:5173/pedidos/" + orderId)
                 .build();
 
         PreferenceClient preferencieClient = new PreferenceClient();

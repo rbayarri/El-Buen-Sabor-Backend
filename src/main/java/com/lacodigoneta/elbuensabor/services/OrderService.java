@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -54,6 +55,12 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
 
     public List<Order> findAllByStatus(Status status) {
         return repository.findAllByStatusOrderByDateTimeAsc(status).stream().map(this::completeEntity).toList();
+    }
+
+    public List<Order> findAllByStatusExceptOrderById(Status status, UUID idOrderExcluded) {
+        return repository.findAllByStatusOrderByDateTimeAsc(status).stream()
+                .filter(o -> !o.getId().equals(idOrderExcluded))
+                .map(this::completeEntity).toList();
     }
 
     public Page<Order> findAllByUserId(UUID id, Pageable pageable) {
@@ -174,7 +181,7 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
         for (OrderDetail orderDetail : entity.getOrderDetails()) {
             orderDetail.setDiscount(BigDecimal.ZERO);
             orderDetail.setUnitPrice(orderDetail.getProduct().getPrice());
-            orderDetail.setUnitCost(orderDetail.getProduct().getPrice().divide(orderDetail.getProduct().getProfitMargin().add(BigDecimal.ONE)));
+            orderDetail.setUnitCost(orderDetail.getProduct().getPrice().divide(orderDetail.getProduct().getProfitMargin().add(BigDecimal.ONE),10, RoundingMode.UP));
         }
     }
 
@@ -212,8 +219,7 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
         }
 
         if (orderCookingTime != 0) {
-            List<Order> cookingOrders = findAllByStatus(Status.COOKING);
-            cookingOrders.forEach(this::completeEntity);
+            List<Order> cookingOrders = findAllByStatusExceptOrderById(Status.COOKING, order.getId());
             int previousOrdersCookingTime = cookingOrders.stream()
                     .flatMap(o -> o.getOrderDetails().stream())
                     .mapToInt(this::calculateCookingTimePerOrderDetail)
@@ -240,6 +246,8 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
     public Order changeState(UUID id, Status status) {
 
         Order order = findById(id);
+        User user = userService.getLoggedUser();
+
         if (order.getStatus().ordinal() >= status.ordinal()) {
             throw new NotAllowedOperationException(FORBIDDEN_OPERATION);
         }
@@ -269,7 +277,9 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
 
         if (status.equals(Status.DELIVERED)) {
             if (!order.getStatus().equals(Status.ON_THE_WAY)) {
-                throw new NotAllowedOperationException(FORBIDDEN_OPERATION);
+                if (!(order.getStatus().equals(Status.READY) && user.getRole().equals(Role.CASHIER))) {
+                    throw new NotAllowedOperationException(FORBIDDEN_OPERATION);
+                }
             }
         }
 
@@ -312,15 +322,12 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
     @Transactional(rollbackOn = Exception.class)
     public Order cancel(UUID id) {
         Order order = findById(id);
-
         if (order.getStatus().equals(Status.CANCELLED)) {
             throw new NotAllowedOperationException("Orden ya cancelada");
         }
-
         if (order.isPaid()) {
             invoiceService.cancel(order);
         }
-
         order.setStatus(Status.CANCELLED);
         return order;
     }
@@ -350,5 +357,12 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
                 "Adjuntamos tu " + target.toLowerCase() + " como archivo adjunto",
                 target.replace(" ", "_").replace("é", "e") + ".pdf",
                 pdf);
+    }
+
+    @Transactional(rollbackOn = Exception.class)
+    public Order add10Minutes(UUID id) {
+        Order order = findById(id);
+        order.setDelayedMinutes(order.getDelayedMinutes() + 10);
+        return order;
     }
 }

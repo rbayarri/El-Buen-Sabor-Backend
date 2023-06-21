@@ -26,7 +26,7 @@ public class CreditNoteService extends BaseServiceImpl<CreditNote, CreditNoteRep
         CreditNote creditNote = new CreditNote();
         creditNote.setInvoice(invoice);
         creditNote.setNumber(getNextNumber());
-        return creditNote;
+        return save(creditNote);
     }
 
     private Integer getNextNumber() {

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -42,6 +43,10 @@ public class ProductService extends BaseServiceImpl<Product, ProductRepository> 
 
     public List<Product> findAllActive() {
         return repository.findAllByActiveTrue().stream().map(this::completeEntity).collect(Collectors.toList());
+    }
+
+    public List<Product> findAllActiveByName(String name) {
+        return repository.findAllByNameContainingIgnoreCaseAndActiveTrue(name).stream().map(this::completeEntity).collect(Collectors.toList());
     }
 
     public List<Product> findAllByActiveAndCategory(String categoryName) {
@@ -178,7 +183,7 @@ public class ProductService extends BaseServiceImpl<Product, ProductRepository> 
                     if (pd.getIngredient().getCurrentStock().equals(BigDecimal.ZERO)) {
                         return 0;
                     } else {
-                        return pd.getIngredient().getCurrentStock().divide(pd.getQuantity()).intValue();
+                        return pd.getIngredient().getCurrentStock().divide(pd.getQuantity(),10, RoundingMode.UP).intValue();
                     }
                 })
                 .min().getAsInt();

@@ -9,8 +9,6 @@ import com.lacodigoneta.elbuensabor.services.OrderService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,25 +27,11 @@ public class OrderController {
 
     private final OrderMapper mapper;
 
-    @GetMapping(value = "/admin", params = "pageable")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<Page<OrderDto>> getAll(Pageable pageable) {
-        Page<Order> all = service.findAllPaged(pageable);
-        return ResponseEntity.ok(all.map(mapper::toOrderDto));
-    }
-
     @GetMapping("/admin")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<List<OrderDto>> getAll() {
         List<Order> all = service.findAll();
         return ResponseEntity.ok(all.stream().map(mapper::toOrderDto).toList());
-    }
-
-    @GetMapping(value = "/admin/user/{id}", params = "pageable")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<Page<OrderDto>> getAllByUserId(@PathVariable UUID id, Pageable pageable) {
-        Page<Order> allByUserId = service.findAllByUserId(id, pageable);
-        return ResponseEntity.ok(allByUserId.map(mapper::toOrderDto));
     }
 
     @GetMapping("/admin/user/{id}")
@@ -57,13 +41,6 @@ public class OrderController {
         return ResponseEntity.ok(allByUserId.stream().map(mapper::toOrderDto).toList());
     }
 
-    @GetMapping(value = "", params = "pageable")
-    @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<Page<ClientOrderDto>> getMyOrders(Pageable pageable) {
-        Page<Order> myOrders = service.findMyOrders(pageable);
-        return ResponseEntity.ok(myOrders.map(mapper::toClientOrderDto));
-    }
-
     @GetMapping("")
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<List<ClientOrderDto>> getMyOrders() {
@@ -71,10 +48,16 @@ public class OrderController {
         return ResponseEntity.ok(myOrders.stream().map(mapper::toClientOrderDto).toList());
     }
 
-    @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_USER','ROLE_ADMIN','ROLE_CASHIER','ROLE_CHEF','ROLE_DELIVERY')")
-    public ResponseEntity<ClientOrderDto> getMyOrder(@PathVariable UUID id) {
+    @GetMapping("/{id}/users")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<ClientOrderDto> getOrderByIdForUser(@PathVariable UUID id) {
         return ResponseEntity.ok(mapper.toClientOrderDto(service.findOrderById(id)));
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_CASHIER','ROLE_CHEF','ROLE_DELIVERY')")
+    public ResponseEntity<OrderDto> getOrderById(@PathVariable UUID id) {
+        return ResponseEntity.ok(mapper.toOrderDto(service.findOrderById(id)));
     }
 
     @PostMapping("")
@@ -93,13 +76,6 @@ public class OrderController {
                 .body(savedOrderDto);
     }
 
-    @GetMapping(value = "/cooking", params = "pageable")
-    @PreAuthorize("hasRole('ROLE_CHEF')")
-    public ResponseEntity<Page<OrderDto>> getCookingOrders(Pageable pageable) {
-        Page<Order> cookingOrders = service.findAllByStatus(Status.COOKING, pageable);
-        return ResponseEntity.ok(cookingOrders.map(mapper::toOrderDto));
-    }
-
     @GetMapping("/cooking")
     @PreAuthorize("hasRole('ROLE_CHEF')")
     public ResponseEntity<List<OrderDto>> getCookingOrders() {
@@ -107,25 +83,11 @@ public class OrderController {
         return ResponseEntity.ok(cookingOrders.stream().map(mapper::toOrderDto).toList());
     }
 
-    @GetMapping(value = "/delivery", params = "pageable")
-    @PreAuthorize("hasRole('ROLE_DELIVERY')")
-    public ResponseEntity<Page<OrderDto>> getOrdersToDeliver(Pageable pageable) {
-        Page<Order> ordersToDeliver = service.findAllByStatus(Status.ON_THE_WAY, pageable);
-        return ResponseEntity.ok(ordersToDeliver.map(mapper::toOrderDto));
-    }
-
     @GetMapping("/delivery")
     @PreAuthorize("hasRole('ROLE_DELIVERY')")
     public ResponseEntity<List<OrderDto>> getOrdersToDeliver() {
         List<Order> ordersToDeliver = service.findAllByStatus(Status.ON_THE_WAY);
         return ResponseEntity.ok(ordersToDeliver.stream().map(mapper::toOrderDto).toList());
-    }
-
-    @GetMapping(value = "/cashier", params = "pageable")
-    @PreAuthorize("hasRole('ROLE_CASHIER')")
-    public ResponseEntity<Page<OrderDto>> getOrdersForCashier(Pageable pageable) {
-        Page<Order> allForCashier = service.findAllForCashier(pageable);
-        return ResponseEntity.ok(allForCashier.map(mapper::toOrderDto));
     }
 
     @GetMapping("/cashier")
@@ -185,6 +147,13 @@ public class OrderController {
         }
         OrderDto orderDto = mapper.toOrderDto(order);
         return ResponseEntity.ok(orderDto);
+    }
+
+    @PatchMapping("/addMinutes/{id}")
+    @PreAuthorize("hasRole('ROLE_CHEF')")
+    public ResponseEntity<OrderDto> addMinutes(@PathVariable UUID id) {
+        Order order = service.add10Minutes(id);
+        return ResponseEntity.ok(mapper.toOrderDto(order));
     }
 
     @GetMapping(value = "/viewInvoice/{id}", produces = {MediaType.APPLICATION_PDF_VALUE})
