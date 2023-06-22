@@ -27,6 +27,7 @@ public class Product extends BaseEntity {
 
     private Integer cookingTime;
 
+    @Column(columnDefinition = "TEXT")
     private String recipe;
 
     @Transient
