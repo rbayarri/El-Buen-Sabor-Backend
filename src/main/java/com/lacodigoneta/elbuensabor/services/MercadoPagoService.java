@@ -117,7 +117,7 @@ public class MercadoPagoService {
     }
 
     private RedirectView redirect(UUID id) {
-        String redirectUrl = "http://localhost:5173/user/pedidos/" + id;
+        String redirectUrl = "http://localhost:5173/pedidos/" + id;
         return new RedirectView(redirectUrl);
     }
 }
