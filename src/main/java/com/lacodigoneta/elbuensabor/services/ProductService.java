@@ -74,6 +74,10 @@ public class ProductService extends BaseServiceImpl<Product, ProductRepository> 
             destination.setCookingTime(source.getCookingTime());
         }
 
+        if (!destination.getProfitMargin().equals(source.getProfitMargin())) {
+            destination.setProfitMargin(source.getProfitMargin());
+        }
+
         if (!destination.getCategory().getId().equals(source.getCategory().getId())) {
 
             Category newCategoryDatabase = categoryService.findById(source.getId());
@@ -183,7 +187,7 @@ public class ProductService extends BaseServiceImpl<Product, ProductRepository> 
                     if (pd.getIngredient().getCurrentStock().equals(BigDecimal.ZERO)) {
                         return 0;
                     } else {
-                        return pd.getIngredient().getCurrentStock().divide(pd.getQuantity(),10, RoundingMode.UP).intValue();
+                        return pd.getIngredient().getCurrentStock().divide(pd.getQuantity(), 10, RoundingMode.UP).intValue();
                     }
                 })
                 .min().getAsInt();
