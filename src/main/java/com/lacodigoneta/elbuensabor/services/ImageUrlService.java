@@ -2,16 +2,18 @@ package com.lacodigoneta.elbuensabor.services;
 
 import com.lacodigoneta.elbuensabor.entities.Image;
 import com.lacodigoneta.elbuensabor.repositories.ImageRepository;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
-public class ImageUrlService extends BaseServiceImpl<Image, ImageRepository> implements ImageService {
+@AllArgsConstructor
+public class ImageUrlService implements ImageService {
 
-    public ImageUrlService(ImageRepository repository) {
-        super(repository);
-    }
+    private final ImageRepository repository;
 
     @Override
     public Image save(Object image) {
@@ -31,16 +33,12 @@ public class ImageUrlService extends BaseServiceImpl<Image, ImageRepository> imp
 
     @Override
     public Image findExisting(String value) {
-        return repository.findByLocation(value);
+        return repository.findByLocationEquals(value);
     }
 
     @Override
-    public Image changeStates(Image source, Image destination) {
-        return null;
-    }
-
-    @Override
-    public void beforeSaveValidations(Image entity) {
+    public Image findById(UUID id) {
+        return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Entity not found"));
 
     }
 }

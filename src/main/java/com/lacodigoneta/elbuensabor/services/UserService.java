@@ -97,7 +97,7 @@ public class UserService extends BaseServiceImpl<User, UserRepository> {
         User userByUsername = repository.findUserByUsernameAndActiveTrue(user.getUsername());
 
         if (Objects.isNull(userByUsername)) {
-            Image savedImage = imageUrlService.save(user.getImage());
+            Image savedImage = imageUrlService.save((Object) user.getImage());
             user.setImage(savedImage);
             user.setPassword(passwordEncoder.encode("SuperSecretPassword1!"));
             userByUsername = save(user);

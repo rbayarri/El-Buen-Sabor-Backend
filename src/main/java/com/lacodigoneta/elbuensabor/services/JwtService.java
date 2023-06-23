@@ -46,6 +46,8 @@ public class JwtService {
         HashMap<String, Object> extraClaims = new HashMap<>();
         if (Objects.nonNull(user.getImage())) {
             extraClaims.put("image", imageMapper.toImageDto(user.getImage()).getLocation());
+        } else {
+            extraClaims.put("image", "https://objetivoligar.com/wp-content/uploads/2017/03/blank-profile-picture-973460_1280.jpg");
         }
         extraClaims.put("name", user.getName());
         extraClaims.put("lastName", user.getLastName());

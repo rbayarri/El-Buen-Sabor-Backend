@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public interface ImageRepository extends JpaRepository<Image, UUID> {
 
-    Image findByLocation(String location);
+    Image findByLocationEquals(String location);
 
     Image findByHash(String hash);
 
