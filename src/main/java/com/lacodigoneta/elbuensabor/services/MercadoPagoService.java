@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+import static com.lacodigoneta.elbuensabor.config.AppConstants.ORIGIN_APP;
+
 @Service
 @AllArgsConstructor
 public class MercadoPagoService {
@@ -32,8 +34,6 @@ public class MercadoPagoService {
     private OrderService orderService;
 
     private UserService userService;
-
-    private JavaMailService mailService;
 
     @Transactional(rollbackOn = Exception.class)
     public Preference createPreference(UUID orderId) throws MPException, MPApiException {
@@ -76,7 +76,7 @@ public class MercadoPagoService {
                         .path("/api/v1/mercadoPago/success")
                         .build()
                         .toUri().toString())
-                .failure("http://localhost:5173/pedidos/" + orderId)
+                .failure(ORIGIN_APP + "/error/Ocurrio un error")
                 .build();
 
         PreferenceClient preferencieClient = new PreferenceClient();
@@ -112,12 +112,12 @@ public class MercadoPagoService {
             orderService.generatePdfAndSendMail(order, true);
             return redirect(order.getId());
         } catch (Exception e) {
-            return new RedirectView("http://localhost:5173/error/" + e.getMessage());
+            return new RedirectView(ORIGIN_APP + "/error/" + e.getMessage());
         }
     }
 
     private RedirectView redirect(UUID id) {
-        String redirectUrl = "http://localhost:5173/pedidos/" + id;
+        String redirectUrl = ORIGIN_APP + "/pedidos/" + id;
         return new RedirectView(redirectUrl);
     }
 }

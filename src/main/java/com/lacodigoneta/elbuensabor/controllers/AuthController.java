@@ -22,6 +22,8 @@ import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import static com.lacodigoneta.elbuensabor.config.AppConstants.ORIGIN_APP;
+
 @RestController
 @RequestMapping("/api/v1/auth")
 @AllArgsConstructor
@@ -52,8 +54,8 @@ public class AuthController {
         mailService.sendHtml("lacodigoneta@gmail.com", saved.getUsername(), "¡Bienvenido!",
                 "<p>Gracias por registrarte en nuestro sitio web</p>" +
                         "<p>Por favor haga click en el siguiente enlace para verificar su email</p>" +
-                        "<a href='http://localhost:5173/verifyEmail/" + saved.getId() + "/" + savedToken.getId() + "'>" +
-                        "http://localhost:5173/verifyEmail/" + saved.getId() + "/" + savedToken.getId() + "</a>"
+                        "<a href='" + ORIGIN_APP + "/verifyEmail/" + saved.getId() + "/" + savedToken.getId() + "'>" +
+                        ORIGIN_APP + "/verifyEmail/" + saved.getId() + "/" + savedToken.getId() + "</a>"
         );
 
         return ResponseEntity.ok(new AuthenticationResponse(jwtService.createToken(saved, false)));

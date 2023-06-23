@@ -26,6 +26,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static com.lacodigoneta.elbuensabor.config.AppConstants.ORIGIN_APP;
+
 @RestController
 @RequestMapping("/api/v1/users")
 @AllArgsConstructor
@@ -116,8 +118,8 @@ public class UserController {
 
         mailService.sendHtml("lacodigoneta@gmail.com", user.getUsername(), "Verificación de correo electrónico",
                 "<p>Por favor haga click en el siguiente enlace para verificar su email</p>" +
-                        "<a href='http://localhost:5173/verifyEmail/" + user.getId() + "/" + savedToken.getId() + "'>" +
-                        "http://localhost:5173/verifyEmail/" + user.getId() + "/" + savedToken.getId() + "</a>"
+                        "<a href='" + ORIGIN_APP +"/verifyEmail/" + user.getId() + "/" + savedToken.getId() + "'>" +
+                        ORIGIN_APP +"/verifyEmail/" + user.getId() + "/" + savedToken.getId() + "</a>"
         );
         return ResponseEntity.ok("Email de verificación enviado");
     }

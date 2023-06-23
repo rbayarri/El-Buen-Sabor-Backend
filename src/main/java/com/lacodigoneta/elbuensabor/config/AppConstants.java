@@ -1,6 +1,17 @@
 package com.lacodigoneta.elbuensabor.config;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+@Component
 public class AppConstants {
+
+    public static String ORIGIN_APP;
+
+    @Value("${web.origin}")
+    public void setOriginApp(String originApp) {
+        ORIGIN_APP = originApp;
+    }
 
     public static final String NULL_VALIDATION_MESSAGE = "Campo no permitido";
 
@@ -79,5 +90,6 @@ public class AppConstants {
     public static final String UNCONFIRMED_EMAIL = "Necesita confirmar el correo electrónico antes de realizar un pedido";
 
     public static final String CATEGORY_WITH_CHILDREN = "Category has children, remove them before set it as not container";
+
 
 }

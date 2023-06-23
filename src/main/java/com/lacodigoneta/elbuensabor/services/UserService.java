@@ -28,6 +28,8 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
+import static com.lacodigoneta.elbuensabor.config.AppConstants.ORIGIN_APP;
+
 @Service
 public class UserService extends BaseServiceImpl<User, UserRepository> {
 
@@ -210,8 +212,8 @@ public class UserService extends BaseServiceImpl<User, UserRepository> {
 
         mailService.sendHtml("lacodigoneta@gmail.com", user.getUsername(), "¡Bienvenido!",
                 "<p>Haga click en el siguiente enlace para restablecer su contraseña</p>" +
-                        "<a href='http://localhost:5173/resetPassword/" + user.getId() + "/" + savedToken.getId() + "'>" +
-                        "http://localhost:5173/resetPassword/" + user.getId() + "/" + savedToken.getId() + "</a>"
+                        "<a href='" + ORIGIN_APP + "/resetPassword/" + user.getId() + "/" + savedToken.getId() + "'>"
+                        + ORIGIN_APP + "/resetPassword/" + user.getId() + "/" + savedToken.getId() + "</a>"
         );
 
     }

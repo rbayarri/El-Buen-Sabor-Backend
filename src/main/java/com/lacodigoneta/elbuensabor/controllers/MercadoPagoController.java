@@ -12,6 +12,8 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import java.util.UUID;
 
+import static com.lacodigoneta.elbuensabor.config.AppConstants.ORIGIN_APP;
+
 @RestController
 @RequestMapping("/api/v1/mercadoPago")
 @AllArgsConstructor
@@ -55,6 +57,6 @@ public class MercadoPagoController {
                                 @RequestParam("merchant_account_id") String merchantAccountId
     ) {
 
-        return new RedirectView("http://localhost:5173/error");
+        return new RedirectView(ORIGIN_APP + "/error");
     }
 }
