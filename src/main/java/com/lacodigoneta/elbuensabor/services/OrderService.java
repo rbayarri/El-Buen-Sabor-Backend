@@ -63,6 +63,14 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
                 .map(this::completeEntity).toList();
     }
 
+    public Order findFirstByStatusAndDateTimeBefore(Status status, LocalDateTime to) {
+        Order firstOrder = repository.findFirstByStatusAndDateTimeBeforeOrderByDateTimeDesc(status, to).orElse(null);
+        if (Objects.nonNull(firstOrder)) {
+            return completeEntity(firstOrder);
+        }
+        return null;
+    }
+
     public Page<Order> findAllByUserId(UUID id, Pageable pageable) {
         User byId = userService.findById(id);
         return repository.findAllByUserOrderByDateTimeAsc(byId, pageable).map(this::completeEntity);
@@ -181,7 +189,7 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
         for (OrderDetail orderDetail : entity.getOrderDetails()) {
             orderDetail.setDiscount(BigDecimal.ZERO);
             orderDetail.setUnitPrice(orderDetail.getProduct().getPrice());
-            orderDetail.setUnitCost(orderDetail.getProduct().getPrice().divide(orderDetail.getProduct().getProfitMargin().add(BigDecimal.ONE),10, RoundingMode.UP));
+            orderDetail.setUnitCost(orderDetail.getProduct().getPrice().divide(orderDetail.getProduct().getProfitMargin().add(BigDecimal.ONE), 10, RoundingMode.UP));
         }
     }
 
@@ -212,22 +220,22 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
                 .mapToInt(this::calculateCookingTimePerOrderDetail).sum();
 
         int chefs = userService.countUsersByRoleAndActiveTrue(Role.CHEF);
-        order.setCookingTime(orderCookingTime/chefs + order.getDelayedMinutes());
+        order.setCookingTime(orderCookingTime / chefs + order.getDelayedMinutes());
 
         if (order.getDeliveryMethod().equals(DeliveryMethod.HOME_DELIVERY)) {
             order.setDeliveryTime(10);
         }
 
         if (orderCookingTime != 0) {
-            List<Order> cookingOrders = findAllByStatusExceptOrderById(Status.COOKING, order.getId());
-            int previousOrdersCookingTime = cookingOrders.stream()
-                    .flatMap(o -> o.getOrderDetails().stream())
-                    .mapToInt(this::calculateCookingTimePerOrderDetail)
-                    .sum() + cookingOrders.stream()
-                    .mapToInt(Order::getDelayedMinutes)
-                    .sum();
 
-            order.setTotalTime(order.getCookingTime() + (previousOrdersCookingTime / chefs) + order.getDeliveryTime());
+            int previousOrderCookingTime = 0;
+            Order previousCookingOrder = findFirstByStatusAndDateTimeBefore(Status.COOKING, order.getDateTime());
+            if (Objects.nonNull(previousCookingOrder)) {
+                previousOrderCookingTime = previousCookingOrder.getCookingTime();
+            }
+
+            order.setCookingTime(order.getCookingTime() + previousOrderCookingTime);
+            order.setTotalTime(order.getCookingTime() + order.getDeliveryTime());
         } else {
             order.setTotalTime(order.getDeliveryTime());
         }
@@ -283,7 +291,7 @@ public class OrderService extends BaseServiceImpl<Order, OrderRepository> {
         }
 
         order.setStatus(status);
-        return completeEntity(order);
+        return order;
     }
 
     @Transactional(rollbackOn = Exception.class)
