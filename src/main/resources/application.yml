@@ -33,7 +33,7 @@ spring:
             enable: true
             required: true
 web:
-  origin: http://localhost:5173
+  origin: https://el-buen-sabor-frontend-production.up.railway.app
 
 upload:
   dir: ./uploads/images/
