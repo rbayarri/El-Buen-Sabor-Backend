@@ -46,3 +46,6 @@ google:
 
 mercado-pago:
   token: TEST-2872458347585384-061000-5b7c71de414edf7b8bf9faf689f4e197-331144077
+
+server:
+  port: ${PORT}
