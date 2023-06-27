@@ -1,10 +1,10 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/elbuensabor?allowPublicKeyRetrieval=true&useSSL=false&useTimezone=true&serverTimezone=GMT&characterEncoding=UTF-8
-    #    url: jdbc:mysql://containers-us-west-34.railway.app:6720/railway
+    #    url: jdbc:mysql://localhost:3306/elbuensabor?allowPublicKeyRetrieval=true&useSSL=false&useTimezone=true&serverTimezone=GMT&characterEncoding=UTF-8
+    url: jdbc:mysql://containers-us-west-34.railway.app:6720/railway
     username: root
-    password: root
-    #    password: NlroDIgs4MPhP3XZmxOc
+    #    password: root
+    password: NlroDIgs4MPhP3XZmxOc
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:

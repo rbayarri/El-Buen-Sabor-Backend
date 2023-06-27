@@ -50,8 +50,10 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
-jar {
-    manifest {
-        attributes 'Main-Class': 'com.lacodigoneta.elbuensabor.ElBuenSaborApplication'
-    }
+
+tasks.jar {
+    enabled = false
+}
+bootJar {
+    enabled = true
 }
